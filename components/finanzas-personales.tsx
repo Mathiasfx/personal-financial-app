@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import {
   CalendarIcon,
@@ -43,6 +42,11 @@ type Categoria =
   | "Salud"
   | "Educación"
   | "Gastos Fijos"
+  | "Imprevistos y Emergencias"
+  | "Hogar y Mantenimiento"
+  | "Regalos y Donaciones"
+  | "Carli"
+  | "Ahorro"
   | "Otros";
 
 type Gasto = {
@@ -85,6 +89,11 @@ const categorias: Categoria[] = [
   "Salud",
   "Educación",
   "Gastos Fijos",
+  "Imprevistos y Emergencias",
+  "Hogar y Mantenimiento",
+  "Regalos y Donaciones",
+  "Carli",
+  "Ahorro",
   "Otros",
 ];
 
@@ -103,6 +112,7 @@ const gastosFijosPredeterminadosOld: GastoFijoOld = {
   MonotributoMat: 26600,
   MonotributoCar: 26600,
   SeguroAuto: 25000,
+  Combustible: 52000,
   Prestamo: 0,
   Supermercado: 120000,
 };
@@ -177,7 +187,7 @@ export default function FinanzasPersonales() {
 
   const cargarDatos = () => {
     const [month, year] = mesActual.split("-"); // mesActual en MM-YYYY
-    const formattedMesActual = `${year}-${month}`; // Convertir a YYYY-MM para cargar de localStorage
+    const formattedMesActual = `${month}-${year}`; // Convertir a YYYY-MM para cargar de localStorage
 
     const datosGuardados = localStorage.getItem(
       `finanzas_${formattedMesActual}`
