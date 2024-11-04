@@ -115,6 +115,10 @@ const gastosFijosPredeterminadosOld: GastoFijoOld = {
   Combustible: 52000,
   Prestamo: 0,
   Supermercado: 120000,
+  CombustibleAuto: 0,
+  CombustibleMoto: 0,
+  Rentas: 0,
+  Carli: 0,
 };
 
 const gastosFijosPredeterminados: GastoFijo = Object.fromEntries(
