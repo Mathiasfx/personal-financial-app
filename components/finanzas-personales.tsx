@@ -109,6 +109,7 @@ const gastosFijosPredeterminadosOld: GastoFijoOld = {
   TarjetaVisa: 230000,
   TarjetaAmerican: 50000,
   TarjetaCarli: 60000,
+  Gymnasio: 66000,
   MonotributoMat: 26600,
   MonotributoCar: 26600,
   SeguroAuto: 25000,
