@@ -36,15 +36,17 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 type Categoria =
-  | "Alimentación"
+  | "Delivery y Comida afuera"
+  | "Supermercado"
   | "Transporte"
-  | "Entretenimiento"
+  | "Entretenimiento y amigos"
   | "Salud"
   | "Educación"
   | "Gastos Fijos"
   | "Imprevistos y Emergencias"
   | "Hogar y Mantenimiento"
   | "Regalos y Donaciones"
+  | "Carli Tarjetas"
   | "Carli"
   | "Ahorro"
   | "Otros";
@@ -83,9 +85,10 @@ interface Datosjson {
 }
 
 const categorias: Categoria[] = [
-  "Alimentación",
+  "Delivery y Comida afuera",
+  "Supermercado",
   "Transporte",
-  "Entretenimiento",
+  "Entretenimiento y amigos",
   "Salud",
   "Educación",
   "Gastos Fijos",
