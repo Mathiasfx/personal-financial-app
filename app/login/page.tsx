@@ -1,18 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Esta página es la página de inicio de sesión de la aplicación.
+ * Contiene un formulario de login con un botón de Google o un campo de email y contraseña.
+ */
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { FcGoogle } from "react-icons/fc";
+import Image from "next/image";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  Button,
-  Typography,
-} from "@mui/material";
+import { TextField, Button, Divider } from "@mui/material";
+import Link from "next/link";
 
 export default function LoginPage() {
   const { login, loginWithGoogle, user } = useAuth();
@@ -52,50 +51,81 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader title="Iniciar Sesión" className="text-center" />
-        <CardContent>
+    <div className="flex items-center justify-center min-h-screen bg-white  ">
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-7xl  overflow-hidden ">
+        {/* Sección Izquierda - Formulario */}
+        <div className="p-10 bg-white  flex flex-col justify-center">
+          <h3 className="font-normal text-gray-900  mb-3 text-2xl">Ingresar</h3>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            startIcon={<FcGoogle />}
+            onClick={handleGoogleLogin}
+            className="mb-3 border-gray-300 min-h-11 rounded-3xl text-[#171717] "
+          >
+            Ingresar con Google
+          </Button>
+
+          <Divider className="mb-6 mt-6" />
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {error && <Typography color="error">{error}</Typography>}
+            {error && <p className="text-red-500">{error}</p>}
             <TextField
-              label="Correo Electrónico"
+              label="Email"
               name="email"
               variant="outlined"
               fullWidth
               onChange={handleChange}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "24px",
+                },
+              }}
             />
             <TextField
-              label="Contraseña"
+              label="Password"
               name="password"
               type="password"
               variant="outlined"
               fullWidth
               onChange={handleChange}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "24px",
+                },
+              }}
             />
-            <Button type="submit" variant="contained" color="primary" fullWidth>
-              Ingresar
-            </Button>
             <Button
-              onClick={handleGoogleLogin}
-              variant="outlined"
-              color="secondary"
+              type="submit"
+              variant="contained"
               fullWidth
+              className="min-h-11 rounded-3xl bg-[#171717]"
             >
-              Iniciar sesión con Google
+              Login
             </Button>
           </form>
-          <Typography
-            variant="body2"
-            className="mt-4 text-center text-gray-600 dark:text-gray-400"
-          >
-            ¿No tienes cuenta?{" "}
-            <a href="/register" className="text-blue-500 hover:underline">
+          <p className="mt-4 text-center text-[#171717] text-sm">
+            ¿Aún no has creado tu cuenta en Fiapp?{"  "}
+            <Link href="/register" className="text-blue-500 hover:underline">
               Regístrate
-            </a>
-          </Typography>
-        </CardContent>
-      </Card>
+            </Link>
+          </p>
+        </div>
+        {/* Sección Derecha - Imagen */}
+        <div className="hidden md:flex bg-[#171717] text-white flex-col justify-center items-center p-10 min-h-[900px] rounded-xl">
+          <h5 className="font-semibold text-white text-2xl mb-4">
+            La mejor manera de manejar tus finanzas
+          </h5>
+
+          <Image
+            src="/images/dashboard-preview.png"
+            alt="Dashboard Preview"
+            width={100}
+            height={100}
+            className="w-full max-w-xs rounded-lg shadow-lg"
+          />
+        </div>
+      </div>
     </div>
   );
 }
