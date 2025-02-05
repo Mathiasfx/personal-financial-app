@@ -17,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <CssBaseline />
+
       <body>
         <AuthProvider>{children}</AuthProvider>
       </body>
