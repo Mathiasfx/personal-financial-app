@@ -56,7 +56,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && <Typography color="error">{error}</Typography>}
             <TextField
-              label="Nombre y Apellido"
+              label="Nombre"
               name="nombre"
               variant="outlined"
               fullWidth
@@ -68,7 +68,7 @@ export default function RegisterPage() {
               }}
             />
             <TextField
-              label="Correo Electrónico"
+              label="Email"
               name="email"
               variant="outlined"
               fullWidth
@@ -80,7 +80,7 @@ export default function RegisterPage() {
               }}
             />
             <TextField
-              label="Contraseña"
+              label="Password"
               name="password"
               type="password"
               variant="outlined"
@@ -93,7 +93,7 @@ export default function RegisterPage() {
               }}
             />
             <TextField
-              label="Confirmar Contraseña"
+              label="Confirmar Password"
               name="confirmPassword"
               type="password"
               variant="outlined"

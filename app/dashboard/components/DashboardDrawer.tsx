@@ -36,6 +36,16 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     router.push(path);
   };
 
+  const handleLogout = () => {
+    try {
+      logout();
+      toggleDrawer();
+      router.push("/login");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <Drawer
       variant="permanent"
@@ -80,7 +90,7 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
         <List>
           <ListItem disablePadding>
             <Tooltip title="Cerrar Sesión" placement="right">
-              <ListItemButton onClick={logout}>
+              <ListItemButton onClick={handleLogout}>
                 <ExitToApp />
                 {open && (
                   <ListItemText primary="Cerrar Sesión" className="ml-2" />
