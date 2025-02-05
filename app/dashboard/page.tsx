@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getFinancialData } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
 export default function Dashboard() {
+
   const { user } = useAuth();
   interface Finanzas {
     ingresos: number;
@@ -76,4 +77,5 @@ export default function Dashboard() {
       </Card>
     </div>
   );
+
 }
