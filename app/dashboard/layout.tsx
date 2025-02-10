@@ -1,8 +1,6 @@
 "use client";
 import { ReactNode, useState } from "react";
-
 import { AppBar, Toolbar } from "@mui/material";
-
 import DashboardDrawer from "./components/DashboardDrawer";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

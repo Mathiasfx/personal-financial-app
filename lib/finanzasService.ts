@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { firestore as db } from "./firebase";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import * as Icons from "@mui/icons-material";
+
 
 export const getFinancialData = async (userId: string, yearMonth: string) => { 
     try {
@@ -39,10 +41,41 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
 
 
 
+
+
   export const getLatestFinancialPeriod = async (userId: string) => {
     const collectionRef = collection(db, `usuarios/${userId}/finanzas`);
     const snapshot = await getDocs(collectionRef);
     const periods = snapshot.docs.map(doc => doc.id);
     return periods.sort().reverse()[0] || "2025-2";
   };
+
+  //#region Categorias
+ export const getCategories = async (userId: string) => {
+    const categoriasRef = collection(db, `usuarios/${userId}/categorias`);
+    const snapshot = await getDocs(categoriasRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  };
+  
+  export const addCategory = async (userId: string, category: { nombre: string; icono: string }) => {
+    const categoriasRef = collection(db, `usuarios/${userId}/categorias`);
+    const newCategoryRef = doc(categoriasRef);
+    await setDoc(newCategoryRef, category);
+    return { id: newCategoryRef.id, ...category };
+  };
+  
+  export const updateCategory = async (userId: string, categoryId: string, updatedData: { nombre?: string; icono?: string }) => {
+    const categoryRef = doc(db, `usuarios/${userId}/categorias/${categoryId}`);
+    await updateDoc(categoryRef, updatedData);
+  };
+  
+  export const deleteCategory = async (userId: string, categoryId: string) => {
+    const categoryRef = doc(db, `usuarios/${userId}/categorias/${categoryId}`);
+    await deleteDoc(categoryRef);
+  };
+
+  export const iconOptions = Object.keys(Icons);
+
+  
+  //#endregion
   

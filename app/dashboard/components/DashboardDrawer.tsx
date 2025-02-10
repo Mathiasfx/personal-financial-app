@@ -78,6 +78,16 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
             </Tooltip>
           </ListItem>
           <ListItem disablePadding>
+            <Tooltip title="Categorias" placement="right">
+              <ListItemButton
+                onClick={() => navigateTo("/dashboard/categorias")}
+              >
+                <AccountCircle />
+                {open && <ListItemText primary="Categorias" className="ml-2" />}
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+          <ListItem disablePadding>
             <Tooltip title="Perfil" placement="right">
               <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
                 <AccountCircle />
