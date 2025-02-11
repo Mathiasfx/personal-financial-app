@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CssBaseline } from "@mui/material";
