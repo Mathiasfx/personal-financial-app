@@ -1,8 +1,6 @@
 "use client";
 import { ReactNode, useState } from "react";
-
 import { AppBar, Toolbar } from "@mui/material";
-
 import DashboardDrawer from "./components/DashboardDrawer";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -15,7 +13,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <DashboardDrawer open={drawerOpen} toggleDrawer={toggleDrawer} />
+      <div className="hidden md:flex md:flex-col  md:border-r md:border-gray-200 ">
+        <DashboardDrawer open={drawerOpen} toggleDrawer={toggleDrawer} />
+      </div>
 
       <div className="flex-1 flex flex-col">
         <AppBar

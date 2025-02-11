@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import "./globals.css";
+
 import { AuthProvider } from "@/context/AuthContext";
 import { CssBaseline } from "@mui/material";
 import localFont from "next/font/local";
+import "./globals.css";
 
 const fontPrincipal = localFont({
   src: [
@@ -39,8 +40,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={fontPrincipal.className}>
-        <CssBaseline />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <CssBaseline />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

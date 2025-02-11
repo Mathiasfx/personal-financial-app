@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --font-principal: var(var(--font-principal))
+  --font-principal: var(var(--font-principal) ) !important;
 }
 
 body {
-  font-family: var(--font-principal);
+  font-family: var(--font-principal) !important;
 }
 
 @layer utilities {

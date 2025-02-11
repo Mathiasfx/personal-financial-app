@@ -15,6 +15,7 @@ import {
   Dashboard,
   AccountCircle,
   ExitToApp,
+  Category,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -40,9 +41,11 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     router.push(path);
   };
 
-  const handleLogout = async () => {
+
+  const handleLogout = () => {
     try {
-      await logout();
+      logout();
+
       toggleDrawer();
       router.push("/login");
     } catch (error) {
@@ -88,46 +91,52 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
           </IconButton>
         </div>
 
-        <div className="p-4">
-          <List>
-            <ListItem disablePadding>
-              <Tooltip title="Dashboard" placement="right">
-                <ListItemButton onClick={() => navigateTo("/dashboard")}>
-                  <Dashboard />
-                  {open && (
-                    <ListItemText primary="Dashboard" className="ml-2" />
-                  )}
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-            <ListItem disablePadding>
-              <Tooltip title="Perfil" placement="right">
-                <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
-                  <AccountCircle />
-                  {open && <ListItemText primary="Perfil" className="ml-2" />}
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          </List>
-          <Divider />
-          <List>
-            <ListItem disablePadding>
-              <Tooltip title="Cerrar Sesión" placement="right">
-                <ListItemButton
-                  onClick={handleLogout}
-                  className="hover:bg-gray-100"
-                >
-                  <ExitToApp />
-                  {open && (
-                    <ListItemText primary="Cerrar Sesión" className="ml-2" />
-                  )}
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          </List>
-        </div>
-      </Drawer>
-    </>
+
+      <div className="p-4">
+        <List>
+          <ListItem disablePadding>
+            <Tooltip title="Dashboard" placement="right">
+              <ListItemButton onClick={() => navigateTo("/dashboard")}>
+                <Dashboard />
+                {open && <ListItemText primary="Dashboard" className="ml-2" />}
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+          <ListItem disablePadding>
+            <Tooltip title="Categorias" placement="right">
+              <ListItemButton
+                onClick={() => navigateTo("/dashboard/categorias")}
+              >
+                <Category />
+                {open && <ListItemText primary="Categorias" className="ml-2" />}
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+          <ListItem disablePadding>
+            <Tooltip title="Perfil" placement="right">
+              <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
+                <AccountCircle />
+                {open && <ListItemText primary="Perfil" className="ml-2" />}
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+        </List>
+        <Divider />
+        <List>
+          <ListItem disablePadding>
+            <Tooltip title="Cerrar Sesión" placement="right">
+              <ListItemButton onClick={handleLogout}>
+                <ExitToApp />
+                {open && (
+                  <ListItemText primary="Cerrar Sesión" className="ml-2" />
+                )}
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+        </List>
+      </div>
+    </Drawer>
+
   );
 };
 
