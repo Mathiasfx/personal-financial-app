@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   getCategories,
@@ -22,6 +22,7 @@ import {
   Select,
   MenuItem,
   TablePagination,
+  SelectChangeEvent,
 } from "@mui/material";
 import { Edit, Delete, Save } from "@mui/icons-material";
 import {
@@ -39,23 +40,27 @@ import {
   School,
 } from "@mui/icons-material";
 
-const iconMap: Record<string, JSX.Element> = {
-  ShoppingCart: <ShoppingCart />,
-  DirectionsCar: <DirectionsCar />,
-  Fastfood: <Fastfood />,
-  Movie: <Movie />,
-  FitnessCenter: <FitnessCenter />,
-  LocalHospital: <LocalHospital />,
-  Home: <Home />,
-  Flight: <Flight />,
-  SportsSoccer: <SportsSoccer />,
-  Restaurant: <Restaurant />,
-  Work: <Work />,
-  School: <School />,
-};
-const iconOptions = Object.keys(iconMap);
-
 export default function CategoriasPage() {
+  const iconMap: { [key: string]: JSX.Element } = useMemo(
+    () => ({
+      ShoppingCart: <ShoppingCart />,
+      DirectionsCar: <DirectionsCar />,
+      Fastfood: <Fastfood />,
+      Movie: <Movie />,
+      FitnessCenter: <FitnessCenter />,
+      LocalHospital: <LocalHospital />,
+      Home: <Home />,
+      Flight: <Flight />,
+      SportsSoccer: <SportsSoccer />,
+      Restaurant: <Restaurant />,
+      Work: <Work />,
+      School: <School />,
+    }),
+    []
+  );
+
+  const iconOptions = useMemo(() => Object.keys(iconMap), [iconMap]);
+
   const { user } = useAuth();
   const [categorias, setCategorias] = useState<any[]>([]);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
@@ -74,25 +79,34 @@ export default function CategoriasPage() {
     }
   }, [user]);
 
+  const paginatedCategories = useMemo(
+    () =>
+      categorias.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [categorias, page, rowsPerPage]
+  );
+
   //#region Agregar Categoría
-  const handleAddCategory = async () => {
+  const handleAddCategory = useCallback(async () => {
     if (user && nuevaCategoria.trim()) {
       const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
       const addedCategory = await addCategory(user.uid, newCategory);
-      setCategorias([...categorias, addedCategory]);
+      setCategorias((prev) => [...prev, addedCategory]);
       setNuevaCategoria("");
       setNuevoIcono("ShoppingCart");
     }
-  };
+  }, [user, nuevaCategoria, nuevoIcono]);
   //#endregion
 
   //#region Eliminar Categoría
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (user) {
-      await deleteCategory(user.uid, categoryId);
-      setCategorias(categorias.filter((cat) => cat.id !== categoryId));
-    }
-  };
+  const handleDeleteCategory = useCallback(
+    async (categoryId: string) => {
+      if (user) {
+        await deleteCategory(user.uid, categoryId);
+        setCategorias((prev) => prev.filter((cat) => cat.id !== categoryId));
+      }
+    },
+    [user]
+  );
   //#endregion
 
   //#region Editar Categoría
@@ -140,6 +154,13 @@ export default function CategoriasPage() {
     setPage(0);
   };
   //#endregion
+  const handleIconChange = useCallback((e: SelectChangeEvent<string>) => {
+    setNuevoIcono(e.target.value);
+  }, []);
+
+  const handleEditIconChange = useCallback((e: SelectChangeEvent<string>) => {
+    setEditIcon(e.target.value);
+  }, []);
 
   return (
     <div className="p-4 md:p-6 w-full max-w-4xl  justify-start">
@@ -162,7 +183,7 @@ export default function CategoriasPage() {
           labelId="icon-label"
           label="Icono"
           value={nuevoIcono}
-          onChange={(e) => setNuevoIcono(e.target.value)}
+          onChange={handleIconChange}
           sx={{
             borderRadius: "24px",
             "& .MuiOutlinedInput-notchedOutline": {
@@ -170,7 +191,7 @@ export default function CategoriasPage() {
             },
           }}
         >
-          {iconOptions.map((icon) => (
+          {iconOptions.map((icon: string) => (
             <MenuItem key={icon} value={icon}>
               {iconMap[icon]}
             </MenuItem>
@@ -195,73 +216,57 @@ export default function CategoriasPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {categorias
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((categoria) => (
-                <TableRow key={categoria.id} className="hover:bg-gray-100">
-                  <TableCell>
-                    {editingId === categoria.id ? (
-                      <TextField
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "24px",
-                          },
-                        }}
-                      />
-                    ) : (
-                      categoria.nombre
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === categoria.id ? (
-                      <Select
-                        value={editIcon}
-                        onChange={(e) => setEditIcon(e.target.value)}
-                        sx={{
-                          borderRadius: "24px",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "24px",
-                          },
-                        }}
-                      >
-                        {iconOptions.map((icon) => (
-                          <MenuItem key={icon} value={icon}>
-                            {iconMap[icon]}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    ) : (
-                      iconMap[categoria.icono]
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === categoria.id ? (
-                      <IconButton onClick={() => handleSaveEdit(categoria.id)}>
-                        <Save />
-                      </IconButton>
-                    ) : (
-                      <IconButton
-                        onClick={() =>
-                          handleEditCategory(
-                            categoria.id,
-                            categoria.nombre,
-                            categoria.icono
-                          )
-                        }
-                      >
-                        <Edit />
-                      </IconButton>
-                    )}
-                    <IconButton
-                      onClick={() => handleDeleteCategory(categoria.id)}
-                    >
-                      <Delete />
+            {paginatedCategories.map((categoria) => (
+              <TableRow key={categoria.id} className="hover:bg-gray-100">
+                <TableCell>
+                  {editingId === categoria.id ? (
+                    <TextField
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                    />
+                  ) : (
+                    categoria.nombre
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editingId === categoria.id ? (
+                    <Select value={editIcon} onChange={handleEditIconChange}>
+                      {iconOptions.map((icon) => (
+                        <MenuItem key={icon} value={icon}>
+                          {iconMap[icon]}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  ) : (
+                    iconMap[categoria.icono]
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editingId === categoria.id ? (
+                    <IconButton onClick={() => handleSaveEdit(categoria.id)}>
+                      <Save />
                     </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                  ) : (
+                    <IconButton
+                      onClick={() =>
+                        handleEditCategory(
+                          categoria.id,
+                          categoria.nombre,
+                          categoria.icono
+                        )
+                      }
+                    >
+                      <Edit />
+                    </IconButton>
+                  )}
+                  <IconButton
+                    onClick={() => handleDeleteCategory(categoria.id)}
+                  >
+                    <Delete />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>

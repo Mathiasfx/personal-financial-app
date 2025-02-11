@@ -23,20 +23,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         >
           <Toolbar className="flex justify-between  min-h-[80px]">
             <div className="flex items-center">
-              <h1 className="ml-6 text-3xl font-medium">Dashboard</h1>
+              <h1 className="ml-6 text-xl md:text-3xl font-medium">
+                Dashboard
+              </h1>
             </div>
-            <div className="col-span-1 md:col-span-2 flex justify-end">
+            <div className="col-span-1 justify-start md:col-span-2 flex md:justify-end">
               <Button
+                size="small"
                 variant="contained"
                 color="primary"
                 onClick={() => console.log("agregar")}
                 sx={{
-                  borderRadius: "16px",
+                  marginRight: "50px",
+                  borderRadius: "24px",
                   padding: "10px 20px",
-                  backgroundColor: "#F9BD24",
+                  color: "#171717",
+                  border: "1px solid #171717",
+                  backgroundColor: "transparent",
                 }}
               >
-                Agragar Gasto
+                + Nuevo gasto
               </Button>
             </div>
           </Toolbar>

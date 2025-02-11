@@ -94,7 +94,7 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
         <div className="p-4">
           <List>
             <ListItem disablePadding>
-              <Tooltip title="Dashboard" placement="right">
+              <Tooltip title="Finanzas" placement="right">
                 <ListItemButton onClick={() => navigateTo("/dashboard")}>
                   <Dashboard />
                   {open && (
