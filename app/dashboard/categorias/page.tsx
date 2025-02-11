@@ -164,8 +164,9 @@ export default function CategoriasPage() {
           value={nuevoIcono}
           onChange={(e) => setNuevoIcono(e.target.value)}
           sx={{
-            "& .MuiSelect-select": {
-              borderRadius: "24px !Important",
+            borderRadius: "24px",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderRadius: "24px",
             },
           }}
         >
@@ -203,6 +204,11 @@ export default function CategoriasPage() {
                       <TextField
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "24px",
+                          },
+                        }}
                       />
                     ) : (
                       categoria.nombre
@@ -214,7 +220,8 @@ export default function CategoriasPage() {
                         value={editIcon}
                         onChange={(e) => setEditIcon(e.target.value)}
                         sx={{
-                          "& .MuiSelect-select": {
+                          borderRadius: "24px",
+                          "& .MuiOutlinedInput-notchedOutline": {
                             borderRadius: "24px",
                           },
                         }}

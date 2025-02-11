@@ -35,12 +35,11 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
   const { logout } = useAuth();
 
   //Detectar pantalla Movil
-  const isMobile = useMediaQuery("(max-width:600px)");
+  const isMobile = useMediaQuery("(max-width:768px)");
 
   const navigateTo = (path: string) => {
     router.push(path);
   };
-
 
   const handleLogout = () => {
     try {
@@ -57,13 +56,14 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     <>
       {isMobile && (
         <IconButton
+          className="botonvelu"
           onClick={toggleDrawer}
           sx={{
             position: "absolute",
             top: 16,
             right: 16,
             zIndex: 1300,
-            color: "white",
+            color: "#171717",
           }}
         >
           <MenuIcon fontSize="small" />
@@ -91,52 +91,55 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
           </IconButton>
         </div>
 
-
-      <div className="p-4">
-        <List>
-          <ListItem disablePadding>
-            <Tooltip title="Dashboard" placement="right">
-              <ListItemButton onClick={() => navigateTo("/dashboard")}>
-                <Dashboard />
-                {open && <ListItemText primary="Dashboard" className="ml-2" />}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-          <ListItem disablePadding>
-            <Tooltip title="Categorias" placement="right">
-              <ListItemButton
-                onClick={() => navigateTo("/dashboard/categorias")}
-              >
-                <Category />
-                {open && <ListItemText primary="Categorias" className="ml-2" />}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-          <ListItem disablePadding>
-            <Tooltip title="Perfil" placement="right">
-              <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
-                <AccountCircle />
-                {open && <ListItemText primary="Perfil" className="ml-2" />}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-        </List>
-        <Divider />
-        <List>
-          <ListItem disablePadding>
-            <Tooltip title="Cerrar Sesión" placement="right">
-              <ListItemButton onClick={handleLogout}>
-                <ExitToApp />
-                {open && (
-                  <ListItemText primary="Cerrar Sesión" className="ml-2" />
-                )}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-        </List>
-      </div>
-    </Drawer>
-
+        <div className="p-4">
+          <List>
+            <ListItem disablePadding>
+              <Tooltip title="Dashboard" placement="right">
+                <ListItemButton onClick={() => navigateTo("/dashboard")}>
+                  <Dashboard />
+                  {open && (
+                    <ListItemText primary="Dashboard" className="ml-2" />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem disablePadding>
+              <Tooltip title="Categorias" placement="right">
+                <ListItemButton
+                  onClick={() => navigateTo("/dashboard/categorias")}
+                >
+                  <Category />
+                  {open && (
+                    <ListItemText primary="Categorias" className="ml-2" />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem disablePadding>
+              <Tooltip title="Perfil" placement="right">
+                <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
+                  <AccountCircle />
+                  {open && <ListItemText primary="Perfil" className="ml-2" />}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          </List>
+          <Divider />
+          <List>
+            <ListItem disablePadding>
+              <Tooltip title="Cerrar Sesión" placement="right">
+                <ListItemButton onClick={handleLogout}>
+                  <ExitToApp />
+                  {open && (
+                    <ListItemText primary="Cerrar Sesión" className="ml-2" />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          </List>
+        </div>
+      </Drawer>
+    </>
   );
 };
 
