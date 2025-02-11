@@ -74,6 +74,7 @@ export default function CategoriasPage() {
     }
   }, [user]);
 
+  //#region Agregar Categoría
   const handleAddCategory = async () => {
     if (user && nuevaCategoria.trim()) {
       const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
@@ -83,14 +84,18 @@ export default function CategoriasPage() {
       setNuevoIcono("ShoppingCart");
     }
   };
+  //#endregion
 
+  //#region Eliminar Categoría
   const handleDeleteCategory = async (categoryId: string) => {
     if (user) {
       await deleteCategory(user.uid, categoryId);
       setCategorias(categorias.filter((cat) => cat.id !== categoryId));
     }
   };
+  //#endregion
 
+  //#region Editar Categoría
   const handleEditCategory = (
     categoryId: string,
     nombreActual: string,
@@ -100,7 +105,9 @@ export default function CategoriasPage() {
     setEditValue(nombreActual);
     setEditIcon(iconoActual);
   };
+  //#endregion
 
+  //#region Guardar Editar Categoría
   const handleSaveEdit = async (categoryId: string) => {
     if (user && editValue.trim()) {
       await updateCategory(user.uid, categoryId, {
@@ -119,7 +126,9 @@ export default function CategoriasPage() {
       setEditIcon("ShoppingCart");
     }
   };
+  //#endregion
 
+  //#region Paginación
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -130,11 +139,14 @@ export default function CategoriasPage() {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+  //#endregion
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold">Administración de Categorías</h1>
-      <div className="flex gap-4 my-4 items-center">
+    <div className="p-4 md:p-6 w-full max-w-4xl  justify-start">
+      <h1 className="text-lg md:text-xl font-bold text-left">
+        Administración de Categorías
+      </h1>
+      <div className="flex flex-col md:flex-row gap-4 my-4 items-center">
         <TextField
           label="Nueva Categoría"
           variant="outlined"
@@ -147,6 +159,8 @@ export default function CategoriasPage() {
           onChange={(e) => setNuevaCategoria(e.target.value)}
         />
         <Select
+          labelId="icon-label"
+          label="Icono"
           value={nuevoIcono}
           onChange={(e) => setNuevoIcono(e.target.value)}
           sx={{
@@ -170,7 +184,7 @@ export default function CategoriasPage() {
         </Button>
       </div>
 
-      <TableContainer component={Paper} className="mt-4 rounded-3xl">
+      <TableContainer component={Paper} className="rounded-xl overflow-hidden">
         <Table>
           <TableHead>
             <TableRow>
@@ -183,7 +197,7 @@ export default function CategoriasPage() {
             {categorias
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((categoria) => (
-                <TableRow key={categoria.id}>
+                <TableRow key={categoria.id} className="hover:bg-gray-100">
                   <TableCell>
                     {editingId === categoria.id ? (
                       <TextField
@@ -246,6 +260,7 @@ export default function CategoriasPage() {
       </TableContainer>
       <TablePagination
         component="div"
+        className="mt-4  flex justify-end"
         count={categorias.length}
         page={page}
         onPageChange={handleChangePage}

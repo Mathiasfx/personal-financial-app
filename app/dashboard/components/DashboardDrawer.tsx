@@ -14,6 +14,7 @@ import {
   Dashboard,
   AccountCircle,
   ExitToApp,
+  Category,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -82,7 +83,7 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
               <ListItemButton
                 onClick={() => navigateTo("/dashboard/categorias")}
               >
-                <AccountCircle />
+                <Category />
                 {open && <ListItemText primary="Categorias" className="ml-2" />}
               </ListItemButton>
             </Tooltip>
