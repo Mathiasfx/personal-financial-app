@@ -8,6 +8,7 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -32,65 +33,101 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
   const router = useRouter();
   const { logout } = useAuth();
 
+  //Detectar pantalla Movil
+  const isMobile = useMediaQuery("(max-width:600px)");
+
   const navigateTo = (path: string) => {
     router.push(path);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toggleDrawer();
+      router.push("/login");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
-    <Drawer
-      variant="permanent"
-      anchor="left"
-      open={open}
-      className="transition-transform duration-300"
-      sx={{
-        width: open ? drawerWidth : 80,
-        "& .MuiDrawer-paper": {
-          width: open ? drawerWidth : 80,
-          transition: "width 0.3s",
-          overflowX: "hidden",
-        },
-      }}
-    >
-      <div className="flex  justify-start items-center">
-        <IconButton size="large" onClick={toggleDrawer} className="m-4">
+    <>
+      {isMobile && (
+        <IconButton
+          onClick={toggleDrawer}
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1300,
+            color: "white",
+          }}
+        >
           <MenuIcon fontSize="small" />
         </IconButton>
-      </div>
+      )}
+      <Drawer
+        variant={isMobile ? "temporary" : "permanent"}
+        anchor="left"
+        open={open}
+        onClose={toggleDrawer}
+        className="transition-transform duration-300"
+        sx={{
+          width: open ? drawerWidth : isMobile ? 0 : 80,
+          display: isMobile && !open ? "none" : "block",
+          "& .MuiDrawer-paper": {
+            width: open ? drawerWidth : isMobile ? 0 : 80,
+            transition: "width 0.3s",
+            overflowX: "hidden",
+          },
+        }}
+      >
+        <div className="flex  justify-start items-center">
+          <IconButton size="large" onClick={toggleDrawer} className="m-4">
+            <MenuIcon fontSize="small" />
+          </IconButton>
+        </div>
 
-      <div className="p-4">
-        <List>
-          <ListItem disablePadding>
-            <Tooltip title="Dashboard" placement="right">
-              <ListItemButton onClick={() => navigateTo("/dashboard")}>
-                <Dashboard />
-                {open && <ListItemText primary="Dashboard" className="ml-2" />}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-          <ListItem disablePadding>
-            <Tooltip title="Perfil" placement="right">
-              <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
-                <AccountCircle />
-                {open && <ListItemText primary="Perfil" className="ml-2" />}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-        </List>
-        <Divider />
-        <List>
-          <ListItem disablePadding>
-            <Tooltip title="Cerrar Sesión" placement="right">
-              <ListItemButton onClick={logout}>
-                <ExitToApp />
-                {open && (
-                  <ListItemText primary="Cerrar Sesión" className="ml-2" />
-                )}
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
-        </List>
-      </div>
-    </Drawer>
+        <div className="p-4">
+          <List>
+            <ListItem disablePadding>
+              <Tooltip title="Dashboard" placement="right">
+                <ListItemButton onClick={() => navigateTo("/dashboard")}>
+                  <Dashboard />
+                  {open && (
+                    <ListItemText primary="Dashboard" className="ml-2" />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem disablePadding>
+              <Tooltip title="Perfil" placement="right">
+                <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
+                  <AccountCircle />
+                  {open && <ListItemText primary="Perfil" className="ml-2" />}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          </List>
+          <Divider />
+          <List>
+            <ListItem disablePadding>
+              <Tooltip title="Cerrar Sesión" placement="right">
+                <ListItemButton
+                  onClick={handleLogout}
+                  className="hover:bg-gray-100"
+                >
+                  <ExitToApp />
+                  {open && (
+                    <ListItemText primary="Cerrar Sesión" className="ml-2" />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          </List>
+        </div>
+      </Drawer>
+    </>
   );
 };
 

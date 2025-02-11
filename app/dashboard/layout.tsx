@@ -1,12 +1,10 @@
 "use client";
 import { ReactNode, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import { AppBar, Toolbar, Typography, CssBaseline } from "@mui/material";
 
 import DashboardDrawer from "./components/DashboardDrawer";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(true);
 
   const toggleDrawer = () => {
@@ -28,9 +26,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <Typography variant="h6" className="ml-2">
                 Dashboard
               </Typography>
-            </div>
-            <div className="flex items-center gap-4">
-              <Typography variant="body1">{user?.email}</Typography>
             </div>
           </Toolbar>
         </AppBar>
