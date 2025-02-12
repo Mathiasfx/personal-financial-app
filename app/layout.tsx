@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
+
+import { AuthProvider } from "@/context/AuthContext";
+import { CssBaseline } from "@mui/material";
 import localFont from "next/font/local";
 import "./globals.css";
-import { AuthProvider } from "@/lib/auth";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const fontPrincipal = localFont({
+  src: [
+    {
+      path: "/fonts/LufgaRegular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "/fonts/LufgaMedium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "/fonts/LufgaBold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-principal",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "::FINANZAS APP::",
+  title: "Finanzas webapp",
   description: "Mathias Pereira DEV",
 };
 
@@ -26,13 +39,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <AuthProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+      <body className={fontPrincipal.className}>
+        <AuthProvider>
+          <CssBaseline />
           {children}
-        </body>
-      </AuthProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

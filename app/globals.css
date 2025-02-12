@@ -2,8 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-principal: var(var(--font-principal) ) !important;
+}
+
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-principal) !important;
 }
 
 @layer utilities {
