@@ -2,6 +2,8 @@
 import { firestore as db } from "./firebase";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import * as Icons from "@mui/icons-material";
+import { Gasto } from "@/models/gasto.model";
+import { Categorias } from "@/models/categorias.model";
 
 
 export const getFinancialData = async (userId: string, yearMonth: string) => { 
@@ -15,14 +17,24 @@ export const getFinancialData = async (userId: string, yearMonth: string) => {
       }
 };
 
-export const saveFinancialData = async (userId: string, yearMonth: string, data: any) => {
+export const saveFinancialData = async (userId: string, periodo: string, nuevoGasto:Gasto) => {
   try {
-    const docRef = doc(db, `usuarios/${userId}/finanzas`, yearMonth);
-    await setDoc(docRef, data, { merge: true });
-    return true;
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      const updatedGastosVariables = data.gastosVariables ? [...data.gastosVariables, nuevoGasto] : [nuevoGasto];
+
+      await setDoc(finanzasRef, { ...data, gastosVariables: updatedGastosVariables }, { merge: true });
+    } else {
+      // Si no existe el documento, lo creamos con el primer gasto
+      await setDoc(finanzasRef, { gastosVariables: [nuevoGasto] });
+    }
+
+    console.log("Gasto guardado exitosamente en gastosVariables");
   } catch (error) {
-    console.error("Error saving financial data: ", error);
-    return false;
+    console.error("Error guardando el gasto:", error);
   }
 };
 
@@ -51,11 +63,30 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
   };
 
   //#region Categorias
- export const getCategories = async (userId: string) => {
-    const categoriasRef = collection(db, `usuarios/${userId}/categorias`);
-    const snapshot = await getDocs(categoriasRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  export const getCategories = async (userId: string): Promise<Categorias[]> => {
+    try {
+      const categoriasRef = collection(db, `usuarios/${userId}/categorias`);
+      const snapshot = await getDocs(categoriasRef);
+  
+      if (snapshot.empty) {
+        console.warn("⚠ No hay categorías en Firestore para este usuario.");
+        return [];
+      }
+  
+      return snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          icono: data.icono || "default-icon", // 🔥 Asegurar que `icono` existe
+          nombre: data.nombre || "Sin nombre", // 🔥 Asegurar que `nombre` existe
+        };
+      });
+    } catch (error) {
+      console.error("🔥 Error obteniendo categorías:", error);
+      return [];
+    }
   };
+  
   
   export const addCategory = async (userId: string, category: { nombre: string; icono: string }) => {
     const categoriasRef = collection(db, `usuarios/${userId}/categorias`);

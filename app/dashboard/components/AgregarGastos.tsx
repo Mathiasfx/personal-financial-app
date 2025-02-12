@@ -25,6 +25,7 @@ import { saveFinancialData, getCategories } from "@/lib/finanzasService";
 import { useAuth } from "@/context/AuthContext";
 
 import { NuevoGasto } from "@/models/nuevoGasto.model";
+import { Categorias } from "@/models/categorias.model";
 
 const AgregarGastos = ({
   open,
@@ -35,18 +36,19 @@ const AgregarGastos = ({
   const { user } = useAuth();
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
-  const [categoria, setCategoria] = useState<string>("");
-  const [categoriasDB, setCategoriasBD] = useState<string[]>([]);
+  const [categoria, setCategoria] = useState<Categorias | null>(null);
+  const [categoriasDB, setCategoriasBD] = useState<Categorias[]>([]);
 
   useEffect(() => {
-    if (!user) return;
-    const fetchCategorias = async () => {
-      const categorias = await getCategories(user?.uid);
-      console.log("categorias", categorias);
-      setCategoriasBD(categorias.map((cat) => cat.id));
-    };
-    fetchCategorias();
-  }, [user]);
+    if (user && open) {
+      const fetchCategorias = async () => {
+        const categorias = await getCategories(user?.uid);
+
+        setCategoriasBD(categorias);
+      };
+      fetchCategorias();
+    }
+  }, [user, open, categoriasDB]);
 
   const handleGuardarGasto = async () => {
     if (!descripcion || !monto || !categoria || !periodo)
@@ -90,19 +92,35 @@ const AgregarGastos = ({
           onChange={(e) => setMonto(e.target.value)}
           className="mb-4"
         />
+
+        {categoriasDB.length > 0 ? (
+          <p>✅ Categorías cargadas</p>
+        ) : (
+          <p>❌ No hay categorías</p>
+        )}
+
         <TextField
           select
           label="Categoría"
           fullWidth
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
+          value={categoria?.id || ""}
+          onChange={(e) => {
+            const selectedCategoria = categoriasDB.find(
+              (cat) => cat.id === e.target.value
+            );
+            if (selectedCategoria) setCategoria(selectedCategoria);
+          }}
           className="mb-4"
         >
-          {categoriasDB.map((cat) => (
-            <MenuItem key={cat} value={cat}>
-              {cat}
-            </MenuItem>
-          ))}
+          {categoriasDB.length > 0 ? (
+            categoriasDB.map((cat) => (
+              <MenuItem key={cat.id} value={cat.id}>
+                {cat.nombre} {/* Aquí podrías agregar el icono también */}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>Cargando categorías...</MenuItem>
+          )}
         </TextField>
       </DialogContent>
       <DialogActions>
