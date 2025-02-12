@@ -1,10 +1,24 @@
 "use client";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { AppBar, Toolbar, Button } from "@mui/material";
 import DashboardDrawer from "./components/DashboardDrawer";
+import { useAuth } from "@/context/AuthContext";
+import { getLatestFinancialPeriod } from "@/lib/finanzasService";
+import AgregarGastos from "./components/AgregarGastos";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [periodoActual, setPeriodoActual] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      getLatestFinancialPeriod(user.uid).then((periodo) => {
+        setPeriodoActual(periodo);
+      });
+    }
+  }, [user]);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -32,7 +46,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 size="small"
                 variant="contained"
                 color="primary"
-                onClick={() => console.log("agregar")}
+                onClick={() => setModalOpen(true)}
                 sx={{
                   marginRight: "50px",
                   borderRadius: "24px",
@@ -49,6 +63,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </AppBar>
 
         <main className="flex-1 p-6 bg-gray-100">{children}</main>
+        <AgregarGastos
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onGastoAgregado={() => setModalOpen(false)}
+          periodo={periodoActual}
+        />
       </div>
     </div>
   );
