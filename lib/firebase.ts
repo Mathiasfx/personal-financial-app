@@ -1,6 +1,6 @@
 import {initializeApp, getApps} from 'firebase/app';
 import {getAnalytics} from 'firebase/analytics';
-import {getAuth, GoogleAuthProvider} from 'firebase/auth';
+import {createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut, GoogleAuthProvider} from 'firebase/auth';
 import {getFirestore} from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -19,4 +19,18 @@ export const analytics = typeof window !== "undefined" ? getAnalytics(app) : nul
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const firestore = getFirestore(app);
+
+export const loginWithEmailPassword = async (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+  
+  export const registerWithEmailPassword = async (email: string, password: string) => {
+    return createUserWithEmailAndPassword(auth, email, password);
+  };
+  
+  export const logout = async () => {
+    return signOut(auth);
+  };
+  
+
 export default app;
