@@ -55,7 +55,7 @@ export default function Dashboard() {
   }, [user]);
   return (
     <div className="p-6 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      <Card className="shadow-md rounded-3xl min-h-[180px]">
+      <Card sx={{ boxShadow: "1", borderRadius: "24px", minHeight: "180px" }}>
         <CardContent>
           <h6 className="text-xl font-bold text-gray-800">
             Estado del mes de Febrero
@@ -70,7 +70,14 @@ export default function Dashboard() {
           </Typography>
         </CardContent>
       </Card>
-      <Card className="shadow-md rounded-3xl bg-[#171717] text-gray-50">
+      <Card
+        sx={{
+          boxShadow: "1",
+          borderRadius: "24px",
+          backgroundColor: "#171717",
+          color: "#f9fafb",
+        }}
+      >
         <CardContent>
           <h6 className="text-xl font-bold text-[#F9BD24]">Resumen</h6>
           <p className="text-2xl font-normal">

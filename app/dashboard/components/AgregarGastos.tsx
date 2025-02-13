@@ -88,7 +88,7 @@ const AgregarGastos = ({
           fullWidth
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
-          className="mb-4"
+          sx={{ marginBottom: "1rem" }}
         />
         <TextField
           label="Monto"
@@ -96,7 +96,7 @@ const AgregarGastos = ({
           fullWidth
           value={monto}
           onChange={(e) => setMonto(e.target.value)}
-          className="mb-4"
+          sx={{ marginBottom: "1rem" }}
         />
 
         <TextField
@@ -110,7 +110,7 @@ const AgregarGastos = ({
             );
             if (selectedCategoria) setCategoria(selectedCategoria);
           }}
-          className="mb-4"
+          sx={{ marginBottom: "1rem" }}
         >
           {categoriasDB.length > 0 ? (
             categoriasDB.map((cat) => (
@@ -131,6 +131,7 @@ const AgregarGastos = ({
           onClick={handleGuardarGasto}
           variant="contained"
           color="primary"
+          sx={{ backgroundColor: "#171717", color: "#fff" }}
         >
           Guardar
         </Button>

@@ -62,13 +62,18 @@ export default function LoginPage() {
             fullWidth
             startIcon={<FcGoogle />}
             onClick={handleGoogleLogin}
-            sx={{ borderColor: "gray" }}
-            className="mb-3 border-gray-300 min-h-11 rounded-3xl text-[#171717] "
+            sx={{
+              borderColor: "#d1d5db",
+              marginBottom: "12px",
+              color: "#171717",
+              borderRadius: "24px",
+              minHeight: "44px",
+            }}
           >
             Ingresar con Google
           </Button>
 
-          <Divider className="mb-6 mt-6" />
+          <Divider sx={{ marginBottom: "1.5rem", marginTop: "1.5rem" }} />
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && <p className="text-red-500">{error}</p>}
             <TextField
@@ -100,7 +105,11 @@ export default function LoginPage() {
               type="submit"
               variant="contained"
               fullWidth
-              className="min-h-11 rounded-3xl bg-[#171717] !important"
+              sx={{
+                backgroundColor: "#171717",
+                borderRadius: "24px",
+                minHeight: "44px",
+              }}
             >
               Login
             </Button>

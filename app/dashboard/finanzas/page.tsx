@@ -80,7 +80,7 @@ export default function FinanzasPage() {
     <div className="p-6">
       <h4>{yearMonth}</h4>
       <h1 className="text-xl font-bold">Administración Financiera</h1>
-      <TableContainer component={Paper} className="mt-4">
+      <TableContainer component={Paper} sx={{ marginTop: "1rem" }}>
         <Table>
           <TableHead>
             <TableRow>

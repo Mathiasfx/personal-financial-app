@@ -110,7 +110,11 @@ export default function RegisterPage() {
               variant="contained"
               color="primary"
               fullWidth
-              className="min-h-11 rounded-3xl bg-[#171717]"
+              sx={{
+                backgroundColor: "#171717",
+                minHeight: "44px",
+                borderRadius: "24px",
+              }}
             >
               Registrarse
             </Button>

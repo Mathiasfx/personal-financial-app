@@ -33,9 +33,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col">
         <AppBar
           position="sticky"
-          className=" shadow-none text-gray-800 bg-gray-100 !important"
+          sx={{
+            boxShadow: "none",
+            color: "#1f2937",
+            backgroundColor: "#f3f4f6",
+          }}
         >
-          <Toolbar className="flex justify-between  min-h-[80px]">
+          <Toolbar
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              minHeight: "80px",
+            }}
+          >
             <div className="flex items-center">
               <h1 className="ml-6 text-xl md:text-3xl font-medium">
                 Dashboard

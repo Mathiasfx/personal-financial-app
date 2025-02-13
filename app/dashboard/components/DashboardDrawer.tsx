@@ -74,7 +74,6 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
         anchor="left"
         open={open}
         onClose={toggleDrawer}
-        className="transition-transform duration-300"
         sx={{
           width: open ? drawerWidth : isMobile ? 0 : 80,
           display: isMobile && !open ? "none" : "block",
@@ -98,7 +97,10 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                 <ListItemButton onClick={() => navigateTo("/dashboard")}>
                   <Dashboard />
                   {open && (
-                    <ListItemText primary="Dashboard" className="ml-2" />
+                    <ListItemText
+                      primary="Dashboard"
+                      sx={{ marginLeft: "8px" }}
+                    />
                   )}
                 </ListItemButton>
               </Tooltip>
@@ -110,7 +112,10 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                 >
                   <Category />
                   {open && (
-                    <ListItemText primary="Categorias" className="ml-2" />
+                    <ListItemText
+                      primary="Categorias"
+                      sx={{ marginLeft: "8px" }}
+                    />
                   )}
                 </ListItemButton>
               </Tooltip>
@@ -119,7 +124,9 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
               <Tooltip title="Perfil" placement="right">
                 <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
                   <AccountCircle />
-                  {open && <ListItemText primary="Perfil" className="ml-2" />}
+                  {open && (
+                    <ListItemText primary="Perfil" sx={{ marginLeft: "8px" }} />
+                  )}
                 </ListItemButton>
               </Tooltip>
             </ListItem>
@@ -131,7 +138,10 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                 <ListItemButton onClick={handleLogout}>
                   <ExitToApp />
                   {open && (
-                    <ListItemText primary="Cerrar Sesión" className="ml-2" />
+                    <ListItemText
+                      primary="Cerrar Sesión"
+                      sx={{ marginLeft: "8px" }}
+                    />
                   )}
                 </ListItemButton>
               </Tooltip>

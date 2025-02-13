@@ -199,14 +199,21 @@ export default function CategoriasPage() {
         </Select>
         <Button
           variant="contained"
-          className="bg-[#171717] text-white rounded-3xl "
+          sx={{
+            backgroundColor: "#171717",
+            color: "#ffff",
+            borderRadius: "24px",
+          }}
           onClick={handleAddCategory}
         >
           Agregar
         </Button>
       </div>
 
-      <TableContainer component={Paper} className="rounded-xl overflow-hidden">
+      <TableContainer
+        component={Paper}
+        sx={{ borderRadius: "24px", overflow: "hidden" }}
+      >
         <Table>
           <TableHead>
             <TableRow>
@@ -272,7 +279,6 @@ export default function CategoriasPage() {
       </TableContainer>
       <TablePagination
         component="div"
-        className="mt-4  flex justify-end"
         count={categorias.length}
         page={page}
         onPageChange={handleChangePage}
@@ -280,6 +286,7 @@ export default function CategoriasPage() {
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[]}
         labelRowsPerPage=""
+        sx={{ marginTop: "1rem", display: "flex", justifyContent: "end" }}
       />
     </div>
   );
