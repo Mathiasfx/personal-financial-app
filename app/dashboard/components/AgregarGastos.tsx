@@ -74,7 +74,13 @@ const AgregarGastos = ({
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      sx={{ borderRadius: "24px" }}
+    >
       <DialogTitle>Registrar Nuevo Gasto</DialogTitle>
       <DialogContent>
         <TextField
@@ -92,12 +98,6 @@ const AgregarGastos = ({
           onChange={(e) => setMonto(e.target.value)}
           className="mb-4"
         />
-
-        {categoriasDB.length > 0 ? (
-          <p>✅ Categorías cargadas</p>
-        ) : (
-          <p>❌ No hay categorías</p>
-        )}
 
         <TextField
           select
