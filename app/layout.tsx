@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/context/AuthContext";
 import localFont from "next/font/local";
 import "./globals.css";
-import "@/styles/globals.css";
 
 const fontPrincipal = localFont({
   src: [
