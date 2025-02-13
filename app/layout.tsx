@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-
 import { AuthProvider } from "@/context/AuthContext";
-import { CssBaseline } from "@mui/material";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -28,8 +26,9 @@ const fontPrincipal = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Finanzas webapp",
-  description: "Mathias Pereira DEV",
+  title: "Finanzas",
+  description:
+    "Ayuda a los usuarios a gestionar sus finanzas personales al recopilar información sobre ingresos, egresos, gastos hormiga, ahorros e inversiones  - Mathias Pereira ",
 };
 
 export default function RootLayout({
@@ -40,10 +39,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={fontPrincipal.className}>
-        <AuthProvider>
-          <CssBaseline />
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
