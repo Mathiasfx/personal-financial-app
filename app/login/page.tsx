@@ -62,6 +62,7 @@ export default function LoginPage() {
             fullWidth
             startIcon={<FcGoogle />}
             onClick={handleGoogleLogin}
+            sx={{ borderColor: "gray" }}
             className="mb-3 border-gray-300 min-h-11 rounded-3xl text-[#171717] "
           >
             Ingresar con Google
