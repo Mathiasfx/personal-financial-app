@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col">
         <AppBar
           position="sticky"
-          className=" shadow-none text-gray-800 bg-gray-100"
+          className=" shadow-none text-gray-800 bg-gray-100 !important"
         >
           <Toolbar className="flex justify-between  min-h-[80px]">
             <div className="flex items-center">
