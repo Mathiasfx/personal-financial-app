@@ -100,7 +100,7 @@ export default function LoginPage() {
               type="submit"
               variant="contained"
               fullWidth
-              className="min-h-11 rounded-3xl bg-[#171717]"
+              className="min-h-11 rounded-3xl bg-[#171717] !important"
             >
               Login
             </Button>
