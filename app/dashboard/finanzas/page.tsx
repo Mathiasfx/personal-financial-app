@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  saveFinancialData,
+  saveExpence,
   updateExpenseStatus,
   getFinancialData,
   getLatestFinancialPeriod,
@@ -58,7 +58,7 @@ export default function FinanzasPage() {
     if (user) {
       const updatedData = { ...data };
       updatedData.gastosFijos[expenseKey].monto = newAmount;
-      await saveFinancialData(user.uid, yearMonth, updatedData);
+      await saveExpence(user.uid, yearMonth, updatedData);
       setData(updatedData);
     }
   };

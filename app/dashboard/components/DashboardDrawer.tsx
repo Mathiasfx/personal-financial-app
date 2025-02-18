@@ -16,6 +16,7 @@ import {
   AccountCircle,
   ExitToApp,
   Category,
+  MonetizationOn,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -106,7 +107,7 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
               </Tooltip>
             </ListItem>
             <ListItem disablePadding>
-              <Tooltip title="Categorias" placement="right">
+              <Tooltip title="Categorias de gastos" placement="right">
                 <ListItemButton
                   onClick={() => navigateTo("/dashboard/categorias")}
                 >
@@ -114,6 +115,21 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                   {open && (
                     <ListItemText
                       primary="Categorias"
+                      sx={{ marginLeft: "8px" }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem disablePadding>
+              <Tooltip title="Gastos Fijos" placement="right">
+                <ListItemButton
+                  onClick={() => navigateTo("/dashboard/gastos-fijos")}
+                >
+                  <MonetizationOn />
+                  {open && (
+                    <ListItemText
+                      primary="Gastos Fijos"
                       sx={{ marginLeft: "8px" }}
                     />
                   )}

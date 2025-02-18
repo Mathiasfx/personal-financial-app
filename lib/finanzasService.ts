@@ -17,7 +17,8 @@ export const getFinancialData = async (userId: string, yearMonth: string) => {
       }
 };
 
-export const saveFinancialData = async (userId: string, periodo: string, nuevoGasto:Gasto) => {
+//#region Gastos Variables
+export const saveExpence = async (userId: string, periodo: string, nuevoGasto:Gasto) => {
   try {
     const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
     const snapshot = await getDoc(finanzasRef);
@@ -38,6 +39,64 @@ export const saveFinancialData = async (userId: string, periodo: string, nuevoGa
   }
 };
 
+export const editExpense = async (userId: string, periodo: string, gastoId: number, updatedData: any) => {
+  try {
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
+
+    if (!snapshot.exists()) {
+      console.error("No existen datos financieros para este período.");
+      return false;
+    }
+
+    const data = snapshot.data();
+    const updatedGastosVariables = data.gastosVariables.map((gasto: { id: number }) =>
+      gasto.id === gastoId ? { ...gasto, ...updatedData } : gasto
+    );
+
+    await updateDoc(finanzasRef, {
+      gastosVariables: updatedGastosVariables,
+    });
+
+    console.log("Gasto editado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("Error al editar el gasto:", error);
+    return false;
+  }
+};
+
+export const deleteExpense = async (userId: string, periodo: string, gastoId: number) => {
+  try {
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
+
+    if (!snapshot.exists()) {
+      console.error("No existen datos financieros para este período.");
+      return false;
+    }
+
+    const data = snapshot.data();
+    const updatedGastosVariables = data.gastosVariables.filter((gasto: { id: number }) => gasto.id !== gastoId);
+
+    await updateDoc(finanzasRef, {
+      gastosVariables: updatedGastosVariables,
+    });
+
+    console.log("Gasto eliminado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("Error al eliminar el gasto:", error);
+    return false;
+  }
+};
+
+
+
+//#endregion
+
+//#region Gastos Fijos
+
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
   try {
     const docRef = doc(db, `usuarios/${userId}/finanzas`, yearMonth);
@@ -52,15 +111,17 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
 };
 
 
+//#endregion
 
 
-
+//#region Periodo
   export const getLatestFinancialPeriod = async (userId: string) => {
     const collectionRef = collection(db, `usuarios/${userId}/finanzas`);
     const snapshot = await getDocs(collectionRef);
     const periods = snapshot.docs.map(doc => doc.id);
     return periods.sort().reverse()[0] || "2025-2";
   };
+  //#endregion
 
   //#region Categorias
   export const getCategories = async (userId: string): Promise<Categorias[]> => {

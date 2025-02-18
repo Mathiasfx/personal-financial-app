@@ -10,3 +10,6 @@ export interface Gasto {
     };
   }
   
+  export interface GastoFijo extends Gasto{
+    pagado:boolean
+  }

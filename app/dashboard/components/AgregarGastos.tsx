@@ -21,11 +21,14 @@ import {
   MenuItem,
   Button,
 } from "@mui/material";
-import { saveFinancialData, getCategories } from "@/lib/finanzasService";
+import { saveExpence, getCategories } from "@/lib/finanzasService";
 import { useAuth } from "@/context/AuthContext";
 
 import { NuevoGasto } from "@/models/nuevoGasto.model";
 import { Categorias } from "@/models/categorias.model";
+import dayjs from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers";
+import DateWrapper from "./DateWrapper";
 
 const AgregarGastos = ({
   open,
@@ -38,6 +41,7 @@ const AgregarGastos = ({
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState<Categorias | null>(null);
   const [categoriasDB, setCategoriasBD] = useState<Categorias[]>([]);
+  const [fecha, setFecha] = useState(dayjs());
 
   useEffect(() => {
     if (user && open) {
@@ -51,14 +55,14 @@ const AgregarGastos = ({
   }, [user, open, categoriasDB]);
 
   const handleGuardarGasto = async () => {
-    if (!descripcion || !monto || !categoria || !periodo)
+    if (!descripcion || !monto || !categoria || !periodo || !fecha)
       return alert("Completa todos los campos");
 
     const nuevoGasto = {
       descripcion,
       monto: parseFloat(monto),
       categoria,
-      fecha: new Date().toISOString(),
+      fecha: fecha.toISOString(),
       id: Date.now(), // ID temporal
     };
 
@@ -66,7 +70,7 @@ const AgregarGastos = ({
       if (!user?.uid) {
         throw new Error("User ID is undefined");
       }
-      await saveFinancialData(user.uid, periodo, nuevoGasto); // Usa el período correcto
+      await saveExpence(user.uid, periodo, nuevoGasto); // Usa el período correcto
       onGastoAgregado(); // Actualiza el Dashboard
       onClose(); // Cierra el modal
     } catch (error) {
@@ -98,6 +102,18 @@ const AgregarGastos = ({
           onChange={(e) => setMonto(e.target.value)}
           sx={{ marginBottom: "1rem" }}
         />
+        <DateWrapper>
+          <DatePicker
+            label="Fecha del Gasto"
+            value={fecha}
+            onChange={(newValue) => {
+              if (newValue) {
+                setFecha(newValue);
+              }
+            }}
+            sx={{ marginBottom: "1rem", width: "100%" }}
+          />
+        </DateWrapper>
 
         <TextField
           select
