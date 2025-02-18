@@ -15,12 +15,13 @@ import {
   TextField,
   Grid2,
 } from "@mui/material";
-import { Edit } from "@mui/icons-material";
+import { Add, Edit } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import {
   getFinancialData,
   getLatestFinancialPeriod,
   updateExpenseStatus,
+  addExpense,
 } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
@@ -46,7 +47,16 @@ export default function GastosFijosPage() {
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [periodo, setPeriodo] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [gastoEditando, setGastoEditando] = useState<GastoFijo | null>(null);
+  const [nuevoGasto, setNuevoGasto] = useState<GastoFijo>({
+    id: 0,
+    fecha: "",
+    categoria: { id: "", nombre: "", icono: "" },
+    monto: 0,
+    descripcion: "",
+    pagado: false,
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -124,10 +134,44 @@ export default function GastosFijosPage() {
       setEditModalOpen(false);
     }
   };
+  const handleAddGastoFijo = async () => {
+    if (!user || !nuevoGasto.descripcion || !nuevoGasto.monto) return;
+
+    const success = await addExpense(user.uid, periodo, nuevoGasto);
+    if (success) {
+      setFinanzas((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          gastosFijos: {
+            ...prev.gastosFijos,
+            [nuevoGasto.descripcion]: {
+              id: nuevoGasto.id,
+              fecha: nuevoGasto.fecha,
+              categoria: nuevoGasto.categoria,
+              monto: parseFloat(nuevoGasto.monto.toString()),
+              descripcion: nuevoGasto.descripcion,
+              pagado: nuevoGasto.pagado,
+            },
+          },
+        };
+      });
+      setAddModalOpen(false);
+    }
+  };
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Gastos Fijos</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-bold">Gastos Fijos</h1>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => setAddModalOpen(true)}
+        >
+          Nuevo Gasto Fijo
+        </Button>
+      </div>
 
       <Grid2 container spacing={2}>
         <Grid2 sx={{ width: "100%", maxWidth: "1200px" }}>
@@ -168,7 +212,7 @@ export default function GastosFijosPage() {
                       onChange={() =>
                         handleTogglePayment(nombre, !gasto.pagado)
                       }
-                      sx={{ color: "#f9bd24" }}
+                      color="success"
                     />
                     <IconButton
                       sx={{ color: "#171717" }}
@@ -187,6 +231,51 @@ export default function GastosFijosPage() {
           </Card>
         </Grid2>
       </Grid2>
+      {/* Modal para Agregar Gasto Fijo */}
+      <Dialog
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Agregar Gasto Fijo</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Descripcion"
+            fullWidth
+            value={nuevoGasto.descripcion}
+            onChange={(e) =>
+              setNuevoGasto({ ...nuevoGasto, descripcion: e.target.value })
+            }
+            sx={{ marginBottom: "1rem" }}
+          />
+          <TextField
+            label="Monto"
+            type="number"
+            fullWidth
+            value={nuevoGasto.monto}
+            onChange={(e) =>
+              setNuevoGasto({
+                ...nuevoGasto,
+                monto: parseFloat(e.target.value),
+              })
+            }
+            sx={{ marginBottom: "1rem" }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddModalOpen(false)} color="error">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleAddGastoFijo}
+            variant="contained"
+            sx={{ color: "#171717" }}
+          >
+            Agregar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal para Editar Gasto Fijo */}
       <Dialog

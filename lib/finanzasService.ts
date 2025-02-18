@@ -2,7 +2,7 @@
 import { firestore as db } from "./firebase";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import * as Icons from "@mui/icons-material";
-import { Gasto } from "@/models/gasto.model";
+import { Gasto, GastoFijo } from "@/models/gasto.model";
 import { Categorias } from "@/models/categorias.model";
 
 
@@ -96,6 +96,32 @@ export const deleteExpense = async (userId: string, periodo: string, gastoId: nu
 //#endregion
 
 //#region Gastos Fijos
+
+export const addExpense = async (userId: string, periodo: string, nuevoGasto:GastoFijo) => {
+  try {
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
+
+    if (!snapshot.exists()) {
+      console.error("No existen datos financieros para este período.");
+      return false;
+    }
+
+    const data = snapshot.data();
+    const updatedGastosFijos = {
+      ...data.gastosFijos,
+      [nuevoGasto.descripcion]: { monto: parseFloat(nuevoGasto.monto.toString()), pagado: nuevoGasto.pagado },
+    };
+
+    await updateDoc(finanzasRef, { gastosFijos: updatedGastosFijos });
+    console.log("Gasto fijo agregado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("Error al agregar el gasto fijo:", error);
+    return false;
+  }
+};
+
 
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
   try {

@@ -294,6 +294,7 @@ export default function Dashboard() {
             ) : finanzas?.gastosVariables.length ? (
               <Grid2 container spacing={2}>
                 {finanzas?.gastosVariables
+                  .slice()
                   .sort(
                     (a, b) =>
                       new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
