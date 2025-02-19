@@ -176,7 +176,7 @@ export default function Dashboard() {
   //#endregion
 
   return (
-    <div className="p-6">
+    <div className="p-0 md:p-4">
       {/* Sección de Cards principales */}
       <Grid2 container spacing={2}>
         <Grid2 sx={{ width: "100%", maxWidth: "600px" }}>

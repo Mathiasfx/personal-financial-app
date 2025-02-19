@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 
-import { TextField, Button, Divider } from "@mui/material";
+import { TextField, Button, Divider, CircularProgress } from "@mui/material";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -30,6 +31,7 @@ export default function LoginPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setLoading(true);
     e.preventDefault();
     setError("");
 
@@ -38,17 +40,25 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
     try {
       await loginWithGoogle();
       router.push("/dashboard");
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
+  if (loading) {
+    return <CircularProgress size="3rem" sx={{ color: "#171717" }} />;
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white  ">
