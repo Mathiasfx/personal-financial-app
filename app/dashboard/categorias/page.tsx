@@ -8,22 +8,21 @@ import {
   updateCategory,
   deleteCategory,
 } from "@/lib/finanzasService";
-import {
-  TextField,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Select,
-  MenuItem,
-  TablePagination,
-  SelectChangeEvent,
-} from "@mui/material";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import IconButton from "@mui/material/IconButton";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import TablePagination from "@mui/material/TablePagination";
+import { SelectChangeEvent } from "@mui/material/Select";
+
 import { Edit, Delete, Save } from "@mui/icons-material";
 import {
   ShoppingCart,

@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/context/AuthContext";
 import localFont from "next/font/local";
 import "./globals.css";
+import { CssBaseline } from "@mui/material";
+import { ThemeProvider } from "@mui/material";
+import { lightTheme } from "./theme/theme";
 
-const fontPrincipal = localFont({
+const lufga = localFont({
   src: [
     {
       path: "/fonts/LufgaRegular.ttf",
@@ -38,8 +41,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={fontPrincipal.className}>
-        <AuthProvider>{children}</AuthProvider>
+      <body className={lufga.className}>
+        <AuthProvider>
+          <CssBaseline />
+          <ThemeProvider theme={lightTheme}>{children}</ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

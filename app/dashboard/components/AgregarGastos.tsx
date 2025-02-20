@@ -12,15 +12,14 @@
  * @returns {JSX.Element} Un elemento JSX que representa el formulario para agregar gastos.
  */
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Button,
-} from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+
 import { saveExpence, getCategories } from "@/lib/finanzasService";
 import { useAuth } from "@/context/AuthContext";
 

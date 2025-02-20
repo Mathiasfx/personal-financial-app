@@ -1,25 +1,26 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
-import {
-  Card,
-  CardContent,
-  Paper,
-  Typography,
-  IconButton,
-  Grid2,
-  Skeleton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  DialogActions,
-  Button,
-} from "@mui/material";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Grid2 from "@mui/material/Grid2";
+import Skeleton from "@mui/material/Skeleton";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import TextField from "@mui/material/TextField";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+
 import dayjs from "dayjs";
 import { useAuth } from "@/context/AuthContext";
 import { editExpense, getFinancialData } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
-import { DatePicker } from "@mui/x-date-pickers";
+//import { DatePicker } from "@mui/x-date-pickers";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
 import { Gasto } from "@/models/gasto.model";
 import { getLatestFinancialPeriod } from "@/lib/finanzasService";
 import { formatCurrency } from "@/lib/utils";
@@ -44,10 +45,7 @@ export default function Dashboard() {
     gastosVariables: Gasto[];
   }
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
-  const [dineroDisponible, setDineroDisponible] = useState(0);
-  const [diasCobro, setDiasCobro] = useState(0);
-  const [totalGastosFijos, setTotalGastosFijos] = useState(0);
-  const [totalGastosVariables, setTotalGastosVariables] = useState(0);
+
   const [periodo, setPeriodo] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [numGastos, setNumGastos] = useState(10);
@@ -76,59 +74,74 @@ export default function Dashboard() {
     setEditModalOpen(true);
   };
 
-  useEffect(() => {
+  // Calcular total de gastos fijos pagados
+  const totalGastosFijos = useMemo(() => {
+    return Object.values(finanzas?.gastosFijos || {}).reduce(
+      (sum, gasto) => sum + (gasto.pagado ? gasto.monto : 0),
+      0
+    );
+  }, [finanzas]);
+
+  // Calcular total de gastos variables
+  const totalGastosVariables = useMemo(() => {
+    return (finanzas?.gastosVariables || []).reduce(
+      (sum, gasto) => sum + gasto.monto,
+      0
+    );
+  }, [finanzas]);
+
+  const dineroDisponible = useMemo(() => {
+    return (
+      (finanzas?.ingresos || 0) +
+      (finanzas?.ingresosExtras || 0) -
+      (totalGastosFijos + totalGastosVariables)
+    );
+  }, [finanzas, totalGastosFijos, totalGastosVariables]);
+
+  const diasCobro = useMemo(() => {
+    if (!finanzas?.fechaCobro) return 0;
+    return dayjs(finanzas.fechaCobro.toDate()).diff(dayjs(), "day");
+  }, [finanzas]);
+
+  const fetchFinanzas = useCallback(async () => {
     if (!user) return;
+    setLoading(true);
 
-    const fetchFinanzas = async () => {
-      try {
-        setLoading(true);
-
-        const periodoActual = await getLatestFinancialPeriod(user.uid);
-        setPeriodo(periodoActual);
-
-        // Obtener los datos financieros usando el período dinámico
-        const data = (await getFinancialData(
-          user.uid,
-          periodoActual
-        )) as Finanzas;
-
-        if (data !== null) {
-          setFinanzas(data);
-
-          // Calcular totales de gastos
-          const totalFijos = Object.values(data.gastosFijos)
-            .filter((gasto) => gasto.pagado)
-            .reduce((sum, gasto) => sum + gasto.monto, 0);
-          const totalVariables = data.gastosVariables.reduce(
-            (sum, gasto) => sum + gasto.monto,
-            0
-          );
-
-          setTotalGastosFijos(totalFijos);
-          setTotalGastosVariables(totalVariables);
-
-          // Calcular dinero disponible
-          const ingresosTotales = data.ingresos + data.ingresosExtras;
-          setDineroDisponible(ingresosTotales - (totalFijos + totalVariables));
-
-          // Calcular días hasta la fecha de cobro
-          const fechaCobro = dayjs(data.fechaCobro.toDate());
-          const diasRestantes = fechaCobro.diff(dayjs(), "day");
-          setDiasCobro(diasRestantes);
-        }
-      } catch (error) {
-        console.error("Error al obtener los datos financieros:", error);
-      } finally {
+    try {
+      const periodoActual = await getLatestFinancialPeriod(user.uid);
+      if (!periodoActual) {
+        console.error("No se encontró un período financiero válido.");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchFinanzas();
+      setPeriodo(periodoActual);
+
+      const data = (await getFinancialData(
+        user.uid,
+        periodoActual
+      )) as Finanzas;
+      if (!data) {
+        console.error("Los datos financieros son inválidos o nulos.");
+        setLoading(false);
+        return;
+      }
+
+      setFinanzas(data);
+    } catch (error) {
+      console.error("Error al obtener los datos financieros:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchFinanzas();
+  }, [fetchFinanzas]);
 
   //#region Gastos Funciones
   const handleDeleteExpense = async (gastoId: number) => {
-    if (!user || !finanzas) return;
+    if (!user || !finanzas || gastoId === undefined) return;
 
     const confirmDelete = window.confirm(
       "¿Seguro que quieres eliminar este gasto?"
@@ -176,7 +189,7 @@ export default function Dashboard() {
   //#endregion
 
   return (
-    <div className="p-6">
+    <div className="p-0 md:p-4">
       {/* Sección de Cards principales */}
       <Grid2 container spacing={2}>
         <Grid2 sx={{ width: "100%", maxWidth: "600px" }}>
@@ -207,7 +220,7 @@ export default function Dashboard() {
                 Fecha de Cobro:{" "}
                 {loading ? (
                   <Skeleton width={100} />
-                ) : finanzas ? (
+                ) : finanzas?.fechaCobro ? (
                   dayjs(finanzas.fechaCobro.toDate()).format("DD/MM/YYYY")
                 ) : (
                   "-"

@@ -1,15 +1,14 @@
 import React from "react";
-import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
-  IconButton,
-  Tooltip,
-  useMediaQuery,
-} from "@mui/material";
+import Drawer from "@mui/material/Drawer";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import useMediaQuery from "@mui/material/useMediaQuery";
+
 import {
   Menu as MenuIcon,
   Dashboard,
@@ -40,6 +39,9 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
 
   const navigateTo = (path: string) => {
     router.push(path);
+    if (isMobile) {
+      toggleDrawer();
+    }
   };
 
   const handleLogout = () => {
