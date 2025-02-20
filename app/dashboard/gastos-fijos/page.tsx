@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  Typography,
-  Paper,
-  Switch,
-  IconButton,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Grid2,
-} from "@mui/material";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import Switch from "@mui/material/Switch";
+import IconButton from "@mui/material/IconButton";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import Grid2 from "@mui/material/Grid2";
+
 import { Add, Edit } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -166,10 +165,11 @@ export default function GastosFijosPage() {
         <h1 className="text-xl font-bold">Gastos Fijos</h1>
         <Button
           variant="contained"
+          sx={{ color: "#171717" }}
           startIcon={<Add />}
           onClick={() => setAddModalOpen(true)}
         >
-          Nuevo Gasto Fijo
+          Gasto Fijo
         </Button>
       </div>
 

@@ -65,7 +65,9 @@ export default function LoginPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-7xl  overflow-hidden ">
         {/* Sección Izquierda - Formulario */}
         <div className="p-10 bg-white  flex flex-col justify-center">
-          <h3 className="font-normal text-gray-900  mb-3 text-2xl">Ingresar</h3>
+          <h3 className="font-normal text-gray-900  mb-3 text-2xl textlufga">
+            Ingresar
+          </h3>
 
           <Button
             variant="outlined"

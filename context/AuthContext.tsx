@@ -1,4 +1,5 @@
 "use client";
+
 import {
   createContext,
   useContext,
@@ -23,16 +24,19 @@ import Cookies from "js-cookie";
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
   login: (email: string, password: string) => Promise<UserCredential>;
   register: (email: string, password: string) => Promise<UserCredential>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
+// 📌 Agregamos un contexto con valor inicial `null`
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true); // 🔥 Mejora para evitar pantallas en blanco
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -44,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         Cookies.remove("token");
       }
+      setLoading(false); // 🚀 Evita cargar indefinidamente
     });
 
     return () => unsubscribe();
@@ -55,7 +60,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!result.user) throw new Error("No se pudo obtener el usuario");
 
       setUser(result.user);
-
       const token = await getIdToken(result.user);
       Cookies.set("token", token, { expires: 1 });
     } catch (error) {
@@ -65,13 +69,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, loginWithGoogle, logout }}
+      value={{ user, loading, login, register, loginWithGoogle, logout }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
 
+// 📌 Hook para consumir el contexto de autenticación
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context)

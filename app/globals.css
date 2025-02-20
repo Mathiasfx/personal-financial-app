@@ -2,13 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
 :root {
   --font-principal: var(var(--font-principal) ) !important;
 }
 
-body {
-  font-family: var(--font-principal) !important;
+
+
+.textlufga{
+  font-family: var(--font-principal), sans-serif !important;
 }
+
 
 @layer utilities {
   .text-balance {

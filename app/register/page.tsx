@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { TextField, Button, Typography } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+
 import Link from "next/link";
 import Image from "next/image";
 import { updateProfile } from "firebase/auth";
