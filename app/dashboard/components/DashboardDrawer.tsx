@@ -59,10 +59,9 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     <>
       {isMobile && (
         <IconButton
-          className="botonvelu"
           onClick={toggleDrawer}
           sx={{
-            position: "absolute",
+            position: "fixed",
             top: 16,
             right: 16,
             zIndex: 1300,
@@ -96,7 +95,7 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
         <div className="p-4">
           <List>
             <ListItem disablePadding>
-              <Tooltip title="Finanzas" placement="right">
+              <Tooltip title="Dashboard" placement="right">
                 <ListItemButton onClick={() => navigateTo("/dashboard")}>
                   <Dashboard />
                   {open && (

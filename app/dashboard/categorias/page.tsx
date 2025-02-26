@@ -10,17 +10,10 @@ import {
 } from "@/lib/finanzasService";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import IconButton from "@mui/material/IconButton";
+
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import TablePagination from "@mui/material/TablePagination";
+
 import { SelectChangeEvent } from "@mui/material/Select";
 
 import { Edit, Delete, Save } from "@mui/icons-material";
@@ -68,7 +61,7 @@ export default function CategoriasPage() {
   const [editValue, setEditValue] = useState("");
   const [editIcon, setEditIcon] = useState("ShoppingCart");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const rowsPerPage = 10;
 
   useEffect(() => {
     if (user) {
@@ -146,20 +139,17 @@ export default function CategoriasPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
   //#endregion
   const handleIconChange = useCallback((e: SelectChangeEvent<string>) => {
     setNuevoIcono(e.target.value);
   }, []);
 
-  const handleEditIconChange = useCallback((e: SelectChangeEvent<string>) => {
-    setEditIcon(e.target.value);
-  }, []);
+  const handleEditIconChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setEditIcon(e.target.value);
+    },
+    []
+  );
 
   return (
     <div className="p-4 md:p-6 w-full max-w-4xl  justify-start">
@@ -209,84 +199,139 @@ export default function CategoriasPage() {
         </Button>
       </div>
 
-      <TableContainer
-        component={Paper}
-        sx={{ borderRadius: "24px", overflow: "hidden" }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Ícono</TableCell>
-              <TableCell>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <div className="overflow-x-auto rounded-2xl shadow-md">
+        <table className="w-full border-collapse bg-white text-left text-sm text-gray-700">
+          {/* Encabezado */}
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-gray-700">Nombre</th>
+              <th className="px-6 py-3 text-gray-700">Ícono</th>
+              <th className="px-6 py-3 text-gray-700">Acciones</th>
+            </tr>
+          </thead>
+
+          {/* Cuerpo */}
+          <tbody>
             {paginatedCategories.map((categoria) => (
-              <TableRow key={categoria.id} className="hover:bg-gray-100">
-                <TableCell>
+              <tr
+                key={categoria.id}
+                className="border-b hover:bg-gray-100 transition-all"
+              >
+                <td className="px-6 py-3">
                   {editingId === categoria.id ? (
-                    <TextField
+                    <input
+                      type="text"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
+                      className="w-full border border-gray-100  rounded-lg px-2 py-3 focus:outline-none "
                     />
                   ) : (
                     categoria.nombre
                   )}
-                </TableCell>
-                <TableCell>
+                </td>
+                <td className="px-6 py-3">
                   {editingId === categoria.id ? (
-                    <Select value={editIcon} onChange={handleEditIconChange}>
+                    <select
+                      value={editIcon}
+                      onChange={handleEditIconChange}
+                      className="w-full border border-gray-100  rounded-lg px-2 py-3 focus:outline-none "
+                    >
                       {iconOptions.map((icon) => (
-                        <MenuItem key={icon} value={icon}>
+                        <option key={icon} value={icon}>
                           {iconMap[icon]}
-                        </MenuItem>
+                        </option>
                       ))}
-                    </Select>
+                    </select>
                   ) : (
                     iconMap[categoria.icono]
                   )}
-                </TableCell>
-                <TableCell>
+                </td>
+                <td className="px-6 py-3 flex space-x-2">
                   {editingId === categoria.id ? (
-                    <IconButton onClick={() => handleSaveEdit(categoria.id)}>
-                      <Save />
-                    </IconButton>
-                  ) : (
-                    <IconButton
-                      onClick={() =>
-                        handleEditCategory(
-                          categoria.id,
-                          categoria.nombre,
-                          categoria.icono
-                        )
-                      }
+                    <button
+                      onClick={() => handleSaveEdit(categoria.id)}
+                      className="p-1 hover:underline border-none bg-none rounded-full"
                     >
-                      <Edit />
-                    </IconButton>
+                      <Save className="w-5 h-5 m-1" />
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() =>
+                          handleEditCategory(
+                            categoria.id,
+                            categoria.nombre,
+                            categoria.icono
+                          )
+                        }
+                        className="text-gray hover:underline border-none bg-none rounded-full "
+                      >
+                        <Edit className="w-5 h-5 m-1" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(categoria.id)}
+                        className="text-red-500 hover:underline border-none bg-none rounded-full p-1 "
+                      >
+                        <Delete className="w-5 h-5 m-1" />
+                      </button>
+                    </>
                   )}
-                  <IconButton
-                    onClick={() => handleDeleteCategory(categoria.id)}
-                  >
-                    <Delete />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        component="div"
-        count={categorias.length}
-        page={page}
-        onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[]}
-        labelRowsPerPage=""
-        sx={{ marginTop: "1rem", display: "flex", justifyContent: "end" }}
-      />
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex justify-end space-x-2 mt-4">
+        {/* Botón Anterior */}
+        <button
+          onClick={() => handleChangePage(null, page - 1)}
+          disabled={page === 0}
+          className="p-2 rounded-full border-none  shadow-sm transition-all hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+            className="w-5 h-5 text-gray-700"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+
+        {/* Indicador de Página */}
+        <span className="px-1 py-1 "></span>
+
+        {/* Botón Siguiente */}
+        <button
+          onClick={() => handleChangePage(null, page + 1)}
+          disabled={page >= Math.ceil(categorias.length / rowsPerPage) - 1}
+          className="p-2 rounded-full border-none  shadow-sm transition-all hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+            className="w-5 h-5 text-gray-700"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

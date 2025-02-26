@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { firestore as db } from "./firebase";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import * as Icons from "@mui/icons-material";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore/lite";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
 import { Categorias } from "@/models/categorias.model";
 
@@ -96,7 +95,7 @@ export const deleteExpense = async (userId: string, periodo: string, gastoId: nu
 //#endregion
 
 //#region Gastos Fijos
-
+//agregar gasto fijo
 export const addExpense = async (userId: string, periodo: string, nuevoGasto:GastoFijo) => {
   try {
     const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
@@ -122,12 +121,52 @@ export const addExpense = async (userId: string, periodo: string, nuevoGasto:Gas
   }
 };
 
+//editar gasto fijo
+export const updateExpense = async (
+  userId: string,
+  periodo: string,
+  updatedGasto: GastoFijo
+) => {
+  try {
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
 
+    if (!snapshot.exists()) {
+      console.error("No existen datos financieros para este período.");
+      return false;
+    }
+
+    const data = snapshot.data();
+    if (!data.gastosFijos || !data.gastosFijos[updatedGasto.descripcion]) {
+      console.error("El gasto fijo no existe.");
+      return false;
+    }
+        console.log("GASTO",updatedGasto)
+    await updateDoc(finanzasRef, {
+      [`gastosFijos.${updatedGasto.descripcion}`]: {
+        monto: parseFloat(updatedGasto.monto.toString()),
+        pagado: updatedGasto.pagado,
+      
+      },
+    });
+
+    console.log("Gasto fijo actualizado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar el gasto fijo:", error);
+    return false;
+  }
+};
+
+
+
+//actualizar estado de gasto fijo
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
   try {
     const docRef = doc(db, `usuarios/${userId}/finanzas`, yearMonth);
     await updateDoc(docRef, {
       [`gastosFijos.${expenseKey}.pagado`]: status,
+      
     });
     return true;
   } catch (error) {
@@ -164,8 +203,8 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
         const data = doc.data();
         return {
           id: doc.id,
-          icono: data.icono || "default-icon", // 🔥 Asegurar que `icono` existe
-          nombre: data.nombre || "Sin nombre", // 🔥 Asegurar que `nombre` existe
+          icono: data.icono || "default-icon", 
+          nombre: data.nombre || "Sin nombre", 
         };
       });
     } catch (error) {
@@ -192,7 +231,7 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
     await deleteDoc(categoryRef);
   };
 
-  export const iconOptions = Object.keys(Icons);
+
 
   
   //#endregion

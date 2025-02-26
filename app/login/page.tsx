@@ -41,7 +41,9 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1600);
     }
   };
 
@@ -57,7 +59,11 @@ export default function LoginPage() {
     }
   };
   if (loading) {
-    return <CircularProgress size="3rem" sx={{ color: "#171717" }} />;
+    return (
+      <div className="flex flex-1 justify-center items-center">
+        <CircularProgress size="3rem" sx={{ color: "#171717" }} />
+      </div>
+    );
   }
 
   return (

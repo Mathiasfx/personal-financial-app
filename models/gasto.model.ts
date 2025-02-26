@@ -11,5 +11,7 @@ export interface Gasto {
   }
   
   export interface GastoFijo extends Gasto{
-    pagado:boolean
+    pagado:boolean,
+    fechaVencimiento?:string 
+
   }
