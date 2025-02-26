@@ -1,19 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Card from "@mui/material/Card";
-import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
-import Switch from "@mui/material/Switch";
-import IconButton from "@mui/material/IconButton";
+
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
-import Grid2 from "@mui/material/Grid2";
-
 import { Add, Edit } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -25,6 +19,7 @@ import {
 } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
+import { Switch } from "@mui/material";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("es-AR", {
@@ -157,82 +152,62 @@ export default function GastosFijosPage() {
 
   return (
     <div className="p-0 md:p-4">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex max-w-screen-lg justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Gastos Fijos</h1>
-        <Button
-          variant="contained"
-          sx={{ color: "#171717" }}
-          startIcon={<Add />}
+        <button
+          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300   mb-2"
           onClick={() => setAddModalOpen(true)}
         >
-          Gasto Fijo
-        </Button>
+          <Add className="text-xl font-bold" />
+          <span className="text-lg font-bold"> Gasto Fijo</span>
+        </button>
       </div>
 
-      <Grid2 container spacing={2}>
-        <Grid2 sx={{ width: "100%", maxWidth: "1200px" }}>
-          <Card
-            sx={{
-              boxShadow: "1",
-              borderRadius: "24px",
-              minHeight: "180px",
-              padding: "16px",
-            }}
-          >
-            {finanzas?.gastosFijos ? (
-              Object.entries(finanzas.gastosFijos).map(([nombre, gasto]) => (
-                <Paper
-                  key={nombre}
-                  sx={{
-                    padding: "12px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderRadius: "16px",
-                    boxShadow: "1",
-                    width: "100%",
-                    marginBottom: "10px",
-                  }}
-                >
-                  <div>
-                    <Typography variant="body1" fontWeight="bold">
-                      {nombre}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Monto: {formatCurrency(gasto.monto)}
-                    </Typography>
-                  </div>
-                  <div>
-                    <Switch
-                      checked={gasto.pagado}
-                      onChange={() =>
-                        handleTogglePayment(nombre, !gasto.pagado)
-                      }
-                      color="success"
-                    />
-                    <IconButton
-                      sx={{ color: "#171717" }}
-                      onClick={() => handleOpenEditModal(nombre, gasto)}
-                    >
-                      <Edit />
-                    </IconButton>
-                  </div>
-                </Paper>
-              ))
-            ) : (
-              <Typography variant="body2">
-                No hay gastos fijos registrados.
-              </Typography>
-            )}
-          </Card>
-        </Grid2>
-      </Grid2>
+      <div className="grid grid-cols-1 gap-4 w-full max-w-5xl ">
+        {/* Card contenedor */}
+        <div className="bg-white shadow-md rounded-2xl p-6 min-h-[180px]">
+          {finanzas?.gastosFijos ? (
+            Object.entries(finanzas.gastosFijos).map(([nombre, gasto]) => (
+              <div
+                key={nombre}
+                className="flex justify-between items-center bg-gray-100 p-4 rounded-xl shadow-sm w-full mb-3"
+              >
+                <div>
+                  <p className="text-lg font-bold">{nombre}</p>
+                  <p className="text-sm text-gray-500">
+                    Monto: {formatCurrency(gasto.monto)}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={gasto.pagado}
+                    onChange={() => handleTogglePayment(nombre, !gasto.pagado)}
+                    color="success"
+                  />
+                  <button
+                    onClick={() => handleOpenEditModal(nombre, gasto)}
+                    className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                  >
+                    <Edit className="w-5 h-5 text-gray-700 m-1 " />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center">
+              No hay gastos fijos registrados.
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Modal para Agregar Gasto Fijo */}
       <Dialog
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         fullWidth
         maxWidth="sm"
+        slotProps={{ paper: { sx: { borderRadius: "24px" } } }}
       >
         <DialogTitle>Agregar Gasto Fijo</DialogTitle>
         <DialogContent>
@@ -260,16 +235,18 @@ export default function GastosFijosPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddModalOpen(false)} color="error">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleAddGastoFijo}
-            variant="contained"
-            sx={{ color: "#171717" }}
+          <button
+            className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none "
+            onClick={() => setAddModalOpen(false)}
           >
-            Agregar
-          </Button>
+            <span className=" text-sm font-bold">Cancelar</span>
+          </button>
+          <button
+            className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none"
+            onClick={handleAddGastoFijo}
+          >
+            <span className=" text-sm font-bold">Agregar</span>
+          </button>
         </DialogActions>
       </Dialog>
 

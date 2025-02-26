@@ -18,7 +18,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
-import Button from "@mui/material/Button";
 
 import { saveExpence, getCategories } from "@/lib/finanzasService";
 import { useAuth } from "@/context/AuthContext";
@@ -82,7 +81,7 @@ const AgregarGastos = ({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      sx={{ borderRadius: "24px" }}
+      slotProps={{ paper: { sx: { borderRadius: "24px" } } }}
     >
       <DialogTitle>Registrar Nuevo Gasto</DialogTitle>
       <DialogContent>
@@ -139,17 +138,18 @@ const AgregarGastos = ({
         </TextField>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="error">
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleGuardarGasto}
-          variant="contained"
-          color="primary"
-          sx={{ backgroundColor: "#171717", color: "#fff" }}
+        <button
+          className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none  "
+          onClick={onClose}
         >
-          Guardar
-        </Button>
+          <span className=" text-sm font-bold">Cancelar</span>
+        </button>
+        <button
+          onClick={handleGuardarGasto}
+          className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none"
+        >
+          <span className="text-sm font-bold"> Guardar</span>
+        </button>
       </DialogActions>
     </Dialog>
   );

@@ -1,26 +1,11 @@
 "use client";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
+
 import DashboardDrawer from "./components/DashboardDrawer";
-import { useAuth } from "@/context/AuthContext";
-import { getLatestFinancialPeriod } from "@/lib/finanzasService";
-import AgregarGastos from "./components/AgregarGastos";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [periodoActual, setPeriodoActual] = useState("");
-
-  useEffect(() => {
-    if (user) {
-      getLatestFinancialPeriod(user.uid).then((periodo) => {
-        setPeriodoActual(periodo);
-      });
-    }
-  }, [user]);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -36,51 +21,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <AppBar
           position="sticky"
           sx={{
+            height: "64px",
             boxShadow: "none",
             color: "#1f2937",
             backgroundColor: "#f3f4f6",
+            borderBottom: { xs: "1px solid #e5e7eb", md: "none" },
           }}
-        >
-          <Toolbar
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              minHeight: "80px",
-            }}
-          >
-            <div className="flex items-center">
-              <h1 className="ml-6 text-xl md:text-3xl font-medium">
-                Dashboard
-              </h1>
-            </div>
-            <div className="col-span-1 justify-start md:col-span-2 flex md:justify-end">
-              <Button
-                size="small"
-                variant="contained"
-                color="primary"
-                onClick={() => setModalOpen(true)}
-                sx={{
-                  marginRight: "50px",
-                  borderRadius: "24px",
-                  padding: "10px 20px",
-                  color: "#171717",
-                  border: "1px solid #171717",
-                  backgroundColor: "transparent",
-                }}
-              >
-                + Nuevo gasto
-              </Button>
-            </div>
-          </Toolbar>
-        </AppBar>
+        ></AppBar>
 
         <main className="flex-1 p-6 bg-gray-100">{children}</main>
-        <AgregarGastos
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onGastoAgregado={() => setModalOpen(false)}
-          periodo={periodoActual}
-        />
       </div>
     </div>
   );

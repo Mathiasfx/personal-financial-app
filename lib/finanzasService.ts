@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { firestore as db } from "./firebase";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import * as Icons from "@mui/icons-material";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore/lite";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
 import { Categorias } from "@/models/categorias.model";
 
@@ -96,7 +95,7 @@ export const deleteExpense = async (userId: string, periodo: string, gastoId: nu
 //#endregion
 
 //#region Gastos Fijos
-//agregar gasto
+//agregar gasto fijo
 export const addExpense = async (userId: string, periodo: string, nuevoGasto:GastoFijo) => {
   try {
     const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
@@ -122,7 +121,7 @@ export const addExpense = async (userId: string, periodo: string, nuevoGasto:Gas
   }
 };
 
-//editar gasto
+//editar gasto fijo
 export const updateExpense = async (
   userId: string,
   periodo: string,
@@ -161,7 +160,7 @@ export const updateExpense = async (
 
 
 
-
+//actualizar estado de gasto fijo
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
   try {
     const docRef = doc(db, `usuarios/${userId}/finanzas`, yearMonth);
@@ -204,8 +203,8 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
         const data = doc.data();
         return {
           id: doc.id,
-          icono: data.icono || "default-icon", // 🔥 Asegurar que `icono` existe
-          nombre: data.nombre || "Sin nombre", // 🔥 Asegurar que `nombre` existe
+          icono: data.icono || "default-icon", 
+          nombre: data.nombre || "Sin nombre", 
         };
       });
     } catch (error) {
@@ -232,7 +231,7 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
     await deleteDoc(categoryRef);
   };
 
-  export const iconOptions = Object.keys(Icons);
+
 
   
   //#endregion

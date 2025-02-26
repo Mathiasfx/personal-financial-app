@@ -1,49 +1,26 @@
 "use client";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import Grid2 from "@mui/material/Grid2";
-import Skeleton from "@mui/material/Skeleton";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
-
 import dayjs from "dayjs";
 import { useAuth } from "@/context/AuthContext";
 import { editExpense, getFinancialData } from "@/lib/finanzasService";
-import { Timestamp } from "firebase/firestore";
-//import { DatePicker } from "@mui/x-date-pickers";
+import { Finanzas } from "@/models/finanzas.model";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-
 import { Gasto } from "@/models/gasto.model";
 import { getLatestFinancialPeriod } from "@/lib/finanzasService";
 import { formatCurrency } from "@/lib/utils";
 import { Edit, DeleteRounded } from "@mui/icons-material";
 import { deleteExpense } from "@/lib/finanzasService";
 import DateWrapper from "./components/DateWrapper";
+import AgregarGastos from "./components/AgregarGastos";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  interface Finanzas {
-    ingresos: number;
-    ingresosExtras: number;
-    inversiones: number;
-    fechaCobro: Timestamp;
-    gastosFijos: {
-      [key: string]: {
-        monto: number;
-        pagado: boolean;
-        fechaVencimiento: Timestamp;
-      };
-    };
-    gastosVariables: Gasto[];
-  }
+
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
 
   const [periodo, setPeriodo] = useState("");
@@ -51,6 +28,7 @@ export default function Dashboard() {
   const [numGastos, setNumGastos] = useState(10);
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
 
   const lastGastoRef = useCallback(
@@ -74,22 +52,25 @@ export default function Dashboard() {
     setEditModalOpen(true);
   };
 
-  // Calcular total de gastos fijos pagados
+  //#region Calcular total de gastos fijos pagados
   const totalGastosFijos = useMemo(() => {
     return Object.values(finanzas?.gastosFijos || {}).reduce(
       (sum, gasto) => sum + (gasto.pagado ? gasto.monto : 0),
       0
     );
   }, [finanzas]);
+  //#endregion
 
-  // Calcular total de gastos variables
+  //#region Calcular total de gastos variables
   const totalGastosVariables = useMemo(() => {
     return (finanzas?.gastosVariables || []).reduce(
       (sum, gasto) => sum + gasto.monto,
       0
     );
   }, [finanzas]);
+  //#endregion
 
+  //#region Disponible
   const dineroDisponible = useMemo(() => {
     return (
       (finanzas?.ingresos || 0) +
@@ -97,12 +78,16 @@ export default function Dashboard() {
       (totalGastosFijos + totalGastosVariables)
     );
   }, [finanzas, totalGastosFijos, totalGastosVariables]);
+  //#endregion
 
+  //#region Dias restantes Cobro
   const diasCobro = useMemo(() => {
     if (!finanzas?.fechaCobro) return 0;
     return dayjs(finanzas.fechaCobro.toDate()).diff(dayjs(), "day");
   }, [finanzas]);
+  //#endregion
 
+  //#region Obtener Datos Finanzas
   const fetchFinanzas = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -138,6 +123,7 @@ export default function Dashboard() {
   useEffect(() => {
     fetchFinanzas();
   }, [fetchFinanzas]);
+  //#endregion
 
   //#region Gastos Funciones
   const handleDeleteExpense = async (gastoId: number) => {
@@ -190,190 +176,154 @@ export default function Dashboard() {
 
   return (
     <div className="p-0 md:p-4">
-      {/* Sección de Cards principales */}
-      <Grid2 container spacing={2}>
-        <Grid2 sx={{ width: "100%", maxWidth: "600px" }}>
-          <Card
-            sx={{ boxShadow: "1", borderRadius: "24px", minHeight: "180px" }}
-          >
-            <CardContent>
-              <h6 className="text-xl font-bold text-gray-800">
-                Estado del mes {loading ? <Skeleton width={100} /> : periodo}
-              </h6>
-              <Typography>
-                Ingresos:{" "}
-                {loading ? (
-                  <Skeleton width={120} />
-                ) : (
-                  formatCurrency(finanzas?.ingresos || 0)
-                )}
-              </Typography>
-              <Typography>
-                Inversiones:{" "}
-                {loading ? (
-                  <Skeleton width={120} />
-                ) : (
-                  formatCurrency(finanzas?.inversiones || 0)
-                )}
-              </Typography>
-              <Typography>
-                Fecha de Cobro:{" "}
-                {loading ? (
-                  <Skeleton width={100} />
-                ) : finanzas?.fechaCobro ? (
-                  dayjs(finanzas.fechaCobro.toDate()).format("DD/MM/YYYY")
-                ) : (
-                  "-"
-                )}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        <Grid2 sx={{ width: "100%", maxWidth: "600px" }}>
-          <Card
-            sx={{
-              boxShadow: "1",
-              borderRadius: "24px",
-              backgroundColor: "#171717",
-              color: "#f9fafb",
-            }}
-          >
-            <CardContent>
-              <h6 className="text-xl font-bold text-[#F9BD24]">Resumen</h6>
-              <p className="text-2xl font-normal">
-                Disponible:{" "}
-                {loading ? (
-                  <Skeleton width={400} style={{ backgroundColor: "gray" }} />
-                ) : (
-                  formatCurrency(dineroDisponible)
-                )}
-              </p>
-              <p className="text-lg font-normal">
-                Días restantes:{" "}
-                {loading ? (
-                  <Skeleton width={120} style={{ backgroundColor: "gray" }} />
-                ) : (
-                  diasCobro
-                )}
-              </p>
-              <p>
-                Total Gastos Fijos:{" "}
-                {loading ? (
-                  <Skeleton width={220} style={{ backgroundColor: "gray" }} />
-                ) : (
-                  formatCurrency(totalGastosFijos)
-                )}
-              </p>
-              <p>
-                Total Gastos Variables:{" "}
-                {loading ? (
-                  <Skeleton width={220} style={{ backgroundColor: "gray" }} />
-                ) : (
-                  formatCurrency(totalGastosVariables)
-                )}
-              </p>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        {/* Sección de Gastos Variables - Ocupa toda la fila */}
-        <Grid2 sx={{ width: "100%", maxWidth: "1216px" }}>
-          <Card
-            sx={{
-              boxShadow: "1",
-              borderRadius: "24px",
-              minHeight: "180px",
-              padding: "16px",
-            }}
-          >
-            <h6 className="text-xl font-bold text-gray-800 mb-4">
-              Gastos Variables
-            </h6>
-
+      <div className="w-full max-w-7xl flex justify-end">
+        <button
+          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300   mb-2"
+          onClick={() => setModalOpen(true)}
+          aria-label="Agregar nuevo gasto"
+        >
+          <span className="text-xl font-bold">+</span>
+          <span className="text-lg font-medium">Nuevo Gasto</span>
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl">
+        <div className="w-full max-w-lg bg-white shadow-md rounded-xl p-4">
+          <h6 className="text-xl font-bold text-gray-800  m-0 ">
+            Estado del mes{" "}
             {loading ? (
-              <Grid2 container spacing={2}>
-                {[1, 2, 3].map((_, index) => (
-                  <Grid2 key={index} sx={{ width: "100%", maxWidth: "1200px" }}>
-                    <Skeleton
-                      variant="rectangular"
-                      width="100%"
-                      height={80}
-                      sx={{ borderRadius: "16px" }}
-                    />
-                  </Grid2>
-                ))}
-              </Grid2>
-            ) : finanzas?.gastosVariables.length ? (
-              <Grid2 container spacing={2}>
-                {finanzas?.gastosVariables
-                  .slice()
-                  .sort(
-                    (a, b) =>
-                      new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-                  )
-                  .slice(0, numGastos)
-                  .map((gasto, index) => (
-                    <Grid2
-                      key={gasto.id}
-                      ref={index === numGastos - 1 ? lastGastoRef : null}
-                      sx={{ width: "100%", maxWidth: "1200px" }}
-                    >
-                      <Paper
-                        sx={{
-                          padding: "12px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          borderRadius: "16px",
-                          boxShadow: "1",
-                          width: "100%",
-                        }}
-                      >
-                        <div>
-                          <Typography variant="body1" fontWeight="bold">
-                            {gasto.descripcion}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {dayjs(gasto.fecha).format("DD/MM/YYYY")}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="bold"
-                            color="error"
-                          >
-                            -{formatCurrency(gasto.monto)}
-                          </Typography>
-                        </div>
-                        <div className="flex justify-center items-center max-w-28 pr-4">
-                          <IconButton
-                            style={{ color: "#171717" }}
-                            onClick={() => handleOpenEditModal(gasto)}
-                          >
-                            <Edit />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={() => handleDeleteExpense(gasto.id)}
-                          >
-                            <DeleteRounded />
-                          </IconButton>
-                        </div>
-                      </Paper>
-                    </Grid2>
-                  ))}
-              </Grid2>
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
             ) : (
-              <Typography variant="body2">No hay gastos variables</Typography>
+              periodo
             )}
-          </Card>
-        </Grid2>
-      </Grid2>
+          </h6>
+          <p>
+            Ingresos:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              formatCurrency(finanzas?.ingresos || 0)
+            )}
+          </p>
+          <p>
+            Inversiones:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              formatCurrency(finanzas?.inversiones || 0)
+            )}
+          </p>
+          <p>
+            Fecha de Cobro:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : finanzas?.fechaCobro ? (
+              dayjs(finanzas.fechaCobro.toDate()).format("DD/MM/YYYY")
+            ) : (
+              "-"
+            )}
+          </p>
+        </div>
+
+        <div className="w-full max-w-lg bg-gray-900 text-white shadow-md rounded-xl p-4 ">
+          <h6 className="text-xl font-bold text-yellow-400 m-0">Resumen</h6>
+          <p className="text-2xl m-0">
+            Disponible:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              formatCurrency(dineroDisponible)
+            )}
+          </p>
+          <p className="text-lg m-0">
+            Días restantes:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              diasCobro
+            )}
+          </p>
+          <p className="m-0">
+            Total Gastos Fijos:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              formatCurrency(totalGastosFijos)
+            )}
+          </p>
+          <p className="m-0">
+            Total Gastos Variables:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              formatCurrency(totalGastosVariables)
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 space-y-4">
+        <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-7xl ">
+          <h6 className="text-xl font-bold text-gray-800 mb-4">
+            Gastos Variables
+          </h6>
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((_, index) => (
+                <div
+                  key={index}
+                  className="w-full h-20 bg-gray-300 animate-pulse rounded-lg"
+                ></div>
+              ))}
+            </div>
+          ) : finanzas?.gastosVariables.length && user ? (
+            <div className="space-y-4">
+              {finanzas?.gastosVariables
+                .sort((a, b) => dayjs(b.fecha).diff(dayjs(a.fecha)))
+                .slice(0, numGastos)
+                .map((gasto, index) => (
+                  <div
+                    key={gasto.id}
+                    ref={index === numGastos - 1 ? lastGastoRef : null}
+                    className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-bold">{gasto.descripcion}</p>
+                      <p className="text-sm text-gray-500">
+                        {dayjs(gasto.fecha).format("DD/MM/YYYY")}
+                      </p>
+                      <span className="text-red-500 font-bold">
+                        -{formatCurrency(gasto.monto)}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleOpenEditModal(gasto)}
+                        className="text-gray hover:underline border-none bg-none rounded-full "
+                      >
+                        <Edit className="m-1" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExpense(gasto.id)}
+                        className="text-red-500 hover:underline border-none bg-none rounded-full "
+                      >
+                        <DeleteRounded className="m-1" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No hay gastos variables</p>
+          )}
+        </div>
+      </div>
+
       <Dialog
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         fullWidth
         maxWidth="sm"
+        slotProps={{ paper: { sx: { borderRadius: "24px" } } }}
       >
         <DialogTitle>Editar Gasto</DialogTitle>
         <DialogContent>
@@ -424,18 +374,26 @@ export default function Dashboard() {
           </DateWrapper>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditModalOpen(false)} color="error">
-            Cancelar
-          </Button>
-          <Button
-            onClick={() => gastoEditando && handleEditGasto(gastoEditando)}
-            variant="contained"
-            color="primary"
+          <button
+            className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none "
+            onClick={() => setEditModalOpen(false)}
           >
-            Guardar Cambios
-          </Button>
+            <span className=" text-sm font-bold">Cancelar</span>
+          </button>
+          <button
+            className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none"
+            onClick={() => gastoEditando && handleEditGasto(gastoEditando)}
+          >
+            <span className=" text-sm font-bold">Guardar Cambios</span>
+          </button>
         </DialogActions>
       </Dialog>
+      <AgregarGastos
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onGastoAgregado={() => setModalOpen(false)}
+        periodo={periodo}
+      />
     </div>
   );
 }
