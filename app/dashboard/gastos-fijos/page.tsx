@@ -21,6 +21,7 @@ import {
   getLatestFinancialPeriod,
   updateExpenseStatus,
   addExpense,
+  updateExpense,
 } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
@@ -109,12 +110,7 @@ export default function GastosFijosPage() {
   const handleEditGasto = async () => {
     if (!user || !finanzas || !gastoEditando) return;
 
-    const success = await updateExpenseStatus(
-      user.uid,
-      periodo,
-      gastoEditando.descripcion,
-      gastoEditando.pagado
-    );
+    const success = await updateExpense(user.uid, periodo, gastoEditando);
 
     if (success) {
       setFinanzas((prev) => {

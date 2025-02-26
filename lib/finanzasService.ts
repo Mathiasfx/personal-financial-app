@@ -96,7 +96,7 @@ export const deleteExpense = async (userId: string, periodo: string, gastoId: nu
 //#endregion
 
 //#region Gastos Fijos
-
+//agregar gasto
 export const addExpense = async (userId: string, periodo: string, nuevoGasto:GastoFijo) => {
   try {
     const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
@@ -122,12 +122,52 @@ export const addExpense = async (userId: string, periodo: string, nuevoGasto:Gas
   }
 };
 
+//editar gasto
+export const updateExpense = async (
+  userId: string,
+  periodo: string,
+  updatedGasto: GastoFijo
+) => {
+  try {
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
+
+    if (!snapshot.exists()) {
+      console.error("No existen datos financieros para este período.");
+      return false;
+    }
+
+    const data = snapshot.data();
+    if (!data.gastosFijos || !data.gastosFijos[updatedGasto.descripcion]) {
+      console.error("El gasto fijo no existe.");
+      return false;
+    }
+        console.log("GASTO",updatedGasto)
+    await updateDoc(finanzasRef, {
+      [`gastosFijos.${updatedGasto.descripcion}`]: {
+        monto: parseFloat(updatedGasto.monto.toString()),
+        pagado: updatedGasto.pagado,
+      
+      },
+    });
+
+    console.log("Gasto fijo actualizado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar el gasto fijo:", error);
+    return false;
+  }
+};
+
+
+
 
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
   try {
     const docRef = doc(db, `usuarios/${userId}/finanzas`, yearMonth);
     await updateDoc(docRef, {
       [`gastosFijos.${expenseKey}.pagado`]: status,
+      
     });
     return true;
   } catch (error) {
