@@ -3,18 +3,170 @@ import { firestore as db } from "./firebase";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore/lite";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
 import { Categorias } from "@/models/categorias.model";
+import { getPreviousPeriod } from "./utils";
+
+//#region Periodo y Finanzas
+/**
+ * Lista todos los períodos que existen
+ */
+export async function listAllPeriods(userId: string) {
+  const ref = collection(db, "usuarios", userId, "finanzas");
+  const snap = await getDocs(ref);
+  return snap.docs.map((d) => ({
+    id: d.id,
+    data: d.data(),
+  }));
+}
+
+/**
+ * Crea un período
+ */
+export async function createPeriod(
+  userId: string,
+  yearMonth: string,
+  data: any
+) {
+  const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    throw new Error(`Ya existe un período con ID ${yearMonth}`);
+  }
+
+  await setDoc(docRef, data);
+}
+
+/**
+ * Hace un update de un período existente.
+ */
+export async function updatePeriod(
+  userId: string,
+  yearMonth: string,
+  data: any
+) {
+  const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    throw new Error(`No existe el período ${yearMonth}`);
+  }
+
+  await updateDoc(docRef, data);
+}
+
+/**
+ * Renombra un período: copia los datos al nuevo ID y borra el documento viejo.
+ */
+export async function renamePeriod(
+  userId: string,
+  oldPeriod: string,
+  newPeriod: string
+) {
+  const oldDocRef = doc(db, "usuarios", userId, "finanzas", oldPeriod);
+  const oldSnap = await getDoc(oldDocRef);
+
+  if (!oldSnap.exists()) {
+    throw new Error(`El período ${oldPeriod} no existe`);
+  }
+
+  // Creamos el doc nuevo
+  const data = oldSnap.data();
+  const newDocRef = doc(db, "usuarios", userId, "finanzas", newPeriod);
+  await setDoc(newDocRef, data);
+
+  // Borramos el viejo
+  //await deleteDoc(oldDocRef);
+}
+
+/**
+ * Borra un período existente.
+ */
+export async function deletePeriod(userId: string, yearMonth: string) {
+  const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
+  await deleteDoc(docRef);
+}
 
 
-export const getFinancialData = async (userId: string, yearMonth: string) => { 
-    try {
-        const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
-        const docSnap = await getDoc(docRef);    
-        return docSnap.exists() ? docSnap.data() : null;
-      } catch (error) {
-        console.error("Error obteniendo finanzas:", error);
-        return null;
+
+export async function createPeriodIfNotExists(
+  userId: string,
+  yearMonth: string
+): Promise<boolean> {
+  try {  
+    const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
+    const docSnap = await getDoc(docRef);
+    // si existe no crear
+    if (docSnap.exists()) {
+      return false;
+    }
+
+    // Si NO existe, creamos el nuevo con gastos fijos anteriores y datos.
+
+    const previousPeriod = getPreviousPeriod(yearMonth);
+    const prevDocRef = doc(db, "usuarios", userId, "finanzas", previousPeriod);
+    const prevDocSnap = await getDoc(prevDocRef);
+
+  
+    const newData = {
+      ingresos: 0,
+      ingresosExtras: 0,
+      inversiones: 0,
+      fechaCobro: null,
+      gastosFijos: {},     
+      gastosVariables: [], 
+    };
+
+    if (prevDocSnap.exists()) {
+      const prevData = prevDocSnap.data();
+
+      newData.ingresos = prevData.ingresos || 0;
+
+
+    
+
+      // Copiamos gastos fijos y seteamos pagado = false, si tu lógica lo requiere.
+      if (prevData.gastosFijos) {
+        const clonados: any = {};
+        Object.entries(prevData.gastosFijos).forEach(([key, gasto]: any) => {
+          clonados[key] = {
+            ...gasto,
+            pagado: false,
+            fechaVencimiento:""
+          };
+        });
+        newData.gastosFijos = clonados;
       }
-};
+    }
+
+    // Escribimos el nuevo doc en Firestore
+    await setDoc(docRef, newData);
+
+    // Retornamos true indicando que SÍ fue creado
+    return true;
+  } catch (error) {
+    console.error("Error creando período:", error);
+    throw error; // o return false, según prefieras
+  }
+}
+
+export async function getFinancialData(
+  userId: string,
+  yearMonth: string
+): Promise<any> {
+  try {
+    const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
+
+
+    const docSnap = await getDoc(docRef);
+
+    return docSnap.exists() ? docSnap.data() : null;
+  } catch (error) {
+    console.error("Error obteniendo finanzas:", error);
+    return null;
+  }
+}
+//#endregion
+
 
 //#region Gastos Variables
 export const saveExpence = async (userId: string, periodo: string, nuevoGasto:Gasto) => {
@@ -141,7 +293,7 @@ export const updateExpense = async (
       console.error("El gasto fijo no existe.");
       return false;
     }
-        console.log("GASTO",updatedGasto)
+ 
     await updateDoc(finanzasRef, {
       [`gastosFijos.${updatedGasto.descripcion}`]: {
         monto: parseFloat(updatedGasto.monto.toString()),
@@ -184,7 +336,7 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
     const collectionRef = collection(db, `usuarios/${userId}/finanzas`);
     const snapshot = await getDocs(collectionRef);
     const periods = snapshot.docs.map(doc => doc.id);
-    return periods.sort().reverse()[0] || "2025-2";
+    return periods.sort().reverse()[0] || "2025-02";
   };
   //#endregion
 

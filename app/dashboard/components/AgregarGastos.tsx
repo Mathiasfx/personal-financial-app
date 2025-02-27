@@ -90,7 +90,7 @@ const AgregarGastos = ({
           fullWidth
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
-          sx={{ marginBottom: "1rem" }}
+          sx={{ marginBottom: "1rem", marginTop: "1rem" }}
         />
         <TextField
           label="Monto"
@@ -98,7 +98,7 @@ const AgregarGastos = ({
           fullWidth
           value={monto}
           onChange={(e) => setMonto(e.target.value)}
-          sx={{ marginBottom: "1rem" }}
+          sx={{ marginBottom: "1rem", marginTop: "1rem" }}
         />
         <DateWrapper>
           <DatePicker
@@ -109,7 +109,7 @@ const AgregarGastos = ({
                 setFecha(newValue);
               }
             }}
-            sx={{ marginBottom: "1rem", width: "100%" }}
+            sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
           />
         </DateWrapper>
 
@@ -124,7 +124,7 @@ const AgregarGastos = ({
             );
             if (selectedCategoria) setCategoria(selectedCategoria);
           }}
-          sx={{ marginBottom: "1rem" }}
+          sx={{ marginBottom: "1rem", marginTop: "1rem" }}
         >
           {categoriasDB.length > 0 ? (
             categoriasDB.map((cat) => (

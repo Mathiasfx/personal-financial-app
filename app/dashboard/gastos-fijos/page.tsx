@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -51,12 +50,14 @@ export default function GastosFijosPage() {
     monto: 0,
     descripcion: "",
     pagado: false,
+    fechaVencimiento: undefined,
   });
 
   useEffect(() => {
     if (!user) return;
     const fetchFinanzas = async () => {
       const periodoActual = await getLatestFinancialPeriod(user.uid);
+
       setPeriodo(periodoActual);
 
       const data = (await getFinancialData(
@@ -142,6 +143,9 @@ export default function GastosFijosPage() {
               monto: parseFloat(nuevoGasto.monto.toString()),
               descripcion: nuevoGasto.descripcion,
               pagado: nuevoGasto.pagado,
+              fechaVencimiento: nuevoGasto.fechaVencimiento
+                ? nuevoGasto.fechaVencimiento
+                : undefined,
             },
           },
         };
@@ -177,6 +181,11 @@ export default function GastosFijosPage() {
                   <p className="text-sm text-gray-500">
                     Monto: {formatCurrency(gasto.monto)}
                   </p>
+                  {gasto.fechaVencimiento && (
+                    <p className="text-sm text-gray-500">
+                      {gasto.fechaVencimiento.toDate().toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -218,7 +227,7 @@ export default function GastosFijosPage() {
             onChange={(e) =>
               setNuevoGasto({ ...nuevoGasto, descripcion: e.target.value })
             }
-            sx={{ marginBottom: "1rem" }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
           />
           <TextField
             label="Monto"
@@ -256,6 +265,7 @@ export default function GastosFijosPage() {
         onClose={() => setEditModalOpen(false)}
         fullWidth
         maxWidth="sm"
+        slotProps={{ paper: { sx: { borderRadius: "24px" } } }}
       >
         <DialogTitle>Editar Gasto Fijo</DialogTitle>
         <DialogContent>
@@ -269,20 +279,22 @@ export default function GastosFijosPage() {
                 prev ? { ...prev, monto: parseFloat(e.target.value) } : null
               )
             }
-            sx={{ marginBottom: "1rem" }}
+            sx={{ marginTop: "1rem" }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditModalOpen(false)} color="error">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleEditGasto}
-            variant="contained"
-            sx={{ color: "#171717" }}
+          <button
+            className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none "
+            onClick={() => setEditModalOpen(false)}
           >
-            Guardar Cambios
-          </Button>
+            <span className=" text-sm font-bold">Cancelar</span>
+          </button>
+          <button
+            className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none"
+            onClick={handleEditGasto}
+          >
+            <span className=" text-sm font-bold">Guardar cambios</span>
+          </button>
         </DialogActions>
       </Dialog>
     </div>
