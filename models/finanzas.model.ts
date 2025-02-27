@@ -5,12 +5,12 @@ import { Gasto } from "./gasto.model";
     ingresos: number;
     ingresosExtras: number;
     inversiones: number;
-    fechaCobro: Timestamp;
+    fechaCobro: Timestamp ;
     gastosFijos: {
       [key: string]: {
         monto: number;
         pagado: boolean;
-        fechaVencimiento: Timestamp;
+        fechaVencimiento?: Timestamp;
       };
     };
     gastosVariables: Gasto[];

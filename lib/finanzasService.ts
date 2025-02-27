@@ -4,6 +4,8 @@ import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "
 import { Gasto, GastoFijo } from "@/models/gasto.model";
 import { Categorias } from "@/models/categorias.model";
 import { getPreviousPeriod } from "./utils";
+import { Finanzas } from "@/models/finanzas.model";
+import dayjs from "dayjs";
 
 //#region Periodo y Finanzas
 /**
@@ -26,14 +28,52 @@ export async function createPeriod(
   yearMonth: string,
   data: any
 ) {
+
   const docRef = doc(db, "usuarios", userId, "finanzas", yearMonth);
   const docSnap = await getDoc(docRef);
 
+  // Si ya existe no crear
   if (docSnap.exists()) {
     throw new Error(`Ya existe un período con ID ${yearMonth}`);
   }
 
-  await setDoc(docRef, data);
+  const prevMonth = dayjs(yearMonth).subtract(1, "month").format("YYYY-MM");
+
+  const prevDocRef = doc(db, "usuarios", userId, "finanzas", prevMonth);
+  const prevSnap = await getDoc(prevDocRef);
+
+  const gastosFijos: Record<string, GastoFijo> = {};
+
+  // Copiar Gastos Fijos
+  if (prevSnap.exists()) {
+    const prevData = prevSnap.data();
+    if (prevData?.gastosFijos) {
+  
+      const gf = prevData.gastosFijos as Record<string, GastoFijo>;
+    
+      for (const key in gf) {
+        gastosFijos[key] = {
+          ...gf[key],
+          pagado: false, 
+         
+          
+        };
+      }
+    }
+  }
+
+  // 4. Mezclar campos que te mandan por parámetro con los gastos fijos copiados
+  const newData:Finanzas = {
+    ingresos: data.ingresos || 0,
+    ingresosExtras: data.ingresosExtras || 0,
+    inversiones: data.inversiones || 0,
+    fechaCobro: data.fechaCobro ?? null,
+    gastosVariables: [], 
+    gastosFijos
+  };
+
+
+  await setDoc(docRef, newData);
 }
 
 /**
@@ -131,7 +171,7 @@ export async function createPeriodIfNotExists(
           clonados[key] = {
             ...gasto,
             pagado: false,
-            fechaVencimiento:""
+           
           };
         });
         newData.gastosFijos = clonados;

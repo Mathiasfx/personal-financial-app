@@ -110,11 +110,14 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
             <ListItem disablePadding>
               <Tooltip title="Mis periodos" placement="right">
                 <ListItemButton
-                  onClick={() => navigateTo("/dashboard/finanzas")}
+                  onClick={() => navigateTo("/dashboard/periodos")}
                 >
                   <AccountCircle />
                   {open && (
-                    <ListItemText primary="Perfil" sx={{ marginLeft: "8px" }} />
+                    <ListItemText
+                      primary="Periodos"
+                      sx={{ marginLeft: "8px" }}
+                    />
                   )}
                 </ListItemButton>
               </Tooltip>
