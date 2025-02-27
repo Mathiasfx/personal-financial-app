@@ -108,6 +108,18 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
               </Tooltip>
             </ListItem>
             <ListItem disablePadding>
+              <Tooltip title="Mis periodos" placement="right">
+                <ListItemButton
+                  onClick={() => navigateTo("/dashboard/finanzas")}
+                >
+                  <AccountCircle />
+                  {open && (
+                    <ListItemText primary="Perfil" sx={{ marginLeft: "8px" }} />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem disablePadding>
               <Tooltip title="Categorias de gastos" placement="right">
                 <ListItemButton
                   onClick={() => navigateTo("/dashboard/categorias")}
@@ -133,16 +145,6 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                       primary="Gastos Fijos"
                       sx={{ marginLeft: "8px" }}
                     />
-                  )}
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-            <ListItem disablePadding>
-              <Tooltip title="Perfil" placement="right">
-                <ListItemButton onClick={() => navigateTo("/dashboard/perfil")}>
-                  <AccountCircle />
-                  {open && (
-                    <ListItemText primary="Perfil" sx={{ marginLeft: "8px" }} />
                   )}
                 </ListItemButton>
               </Tooltip>

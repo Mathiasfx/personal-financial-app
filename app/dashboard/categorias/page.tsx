@@ -152,7 +152,7 @@ export default function CategoriasPage() {
   );
 
   return (
-    <div className="p-4 md:p-6 w-full max-w-4xl  justify-start">
+    <div className="p-0 md:p-6 w-full max-w-4xl  justify-start">
       <h1 className="text-lg md:text-xl font-bold text-left">
         Administración de Categorías
       </h1>
@@ -162,6 +162,8 @@ export default function CategoriasPage() {
           variant="outlined"
           value={nuevaCategoria}
           sx={{
+            marginTop: "1rem",
+            marginBottom: "1rem",
             "& .MuiOutlinedInput-root": {
               borderRadius: "24px",
             },
@@ -264,13 +266,13 @@ export default function CategoriasPage() {
                             categoria.icono
                           )
                         }
-                        className="text-gray hover:underline border-none bg-none rounded-full "
+                        className="text-gray-900 hover:underline border-none bg-none rounded-full "
                       >
-                        <Edit className="w-5 h-5 m-1" />
+                        <Edit className="w-5 h-5 m-1 text-gray-900" />
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(categoria.id)}
-                        className="text-red-500 hover:underline border-none bg-none rounded-full p-1 "
+                        className="text-red-500 hover:underline border-none bg-none rounded-full "
                       >
                         <Delete className="w-5 h-5 m-1" />
                       </button>

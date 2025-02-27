@@ -7,11 +7,16 @@ import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import dayjs from "dayjs";
 import { useAuth } from "@/context/AuthContext";
-import { editExpense, getFinancialData } from "@/lib/finanzasService";
+import {
+  createPeriodIfNotExists,
+  editExpense,
+  getFinancialData,
+  listAllPeriods,
+} from "@/lib/finanzasService";
 import { Finanzas } from "@/models/finanzas.model";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Gasto } from "@/models/gasto.model";
-import { getLatestFinancialPeriod } from "@/lib/finanzasService";
+//import { getLatestFinancialPeriod } from "@/lib/finanzasService";
 import { formatCurrency } from "@/lib/utils";
 import { Edit, DeleteRounded } from "@mui/icons-material";
 import { deleteExpense } from "@/lib/finanzasService";
@@ -22,8 +27,8 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
-
-  const [periodo, setPeriodo] = useState("");
+  const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
+  const [periodo, setPeriodo] = useState(dayjs().format("YYYY-MM")); // Por defecto, el mes actual
   const [loading, setLoading] = useState<boolean>(true);
   const [numGastos, setNumGastos] = useState(10);
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
@@ -88,44 +93,63 @@ export default function Dashboard() {
   //#endregion
 
   //#region Obtener Datos Finanzas
-  const fetchFinanzas = useCallback(async () => {
+  useEffect(() => {
     if (!user) return;
+
+    (async () => {
+      try {
+        const allPeriods = await listAllPeriods(user.uid);
+        // listAllPeriods -> te retorna un array de { id, data }
+
+        // Extraemos sólo los IDs
+        const ids = allPeriods.map((p) => p.id);
+
+        // Ordenamos los IDs (opcional)
+        ids.sort();
+
+        // Si prefieres que siempre aparezca el mes actual en el select
+        // aunque no exista todavía en la base:
+        const current = dayjs().format("YYYY-MM");
+        if (!ids.includes(current)) {
+          ids.push(current);
+          ids.sort();
+        }
+
+        setPeriodosDisponibles(ids);
+      } catch (error) {
+        console.error("Error listando periodos:", error);
+      }
+    })();
+  }, [user]);
+
+  const fetchCurrentPeriodData = useCallback(async () => {
+    if (!user || !periodo) return;
     setLoading(true);
-
     try {
-      const periodoActual = await getLatestFinancialPeriod(user.uid);
-      if (!periodoActual) {
-        console.error("No se encontró un período financiero válido.");
-        setLoading(false);
-        return;
-      }
-
-      setPeriodo(periodoActual);
-
-      const data = (await getFinancialData(
-        user.uid,
-        periodoActual
-      )) as Finanzas;
-      if (!data) {
-        console.error("Los datos financieros son inválidos o nulos.");
-        setLoading(false);
-        return;
-      }
-
+      await createPeriodIfNotExists(user.uid, periodo); // Crea si no existe
+      const data = await getFinancialData(user.uid, periodo); // Lee
       setFinanzas(data);
     } catch (error) {
-      console.error("Error al obtener los datos financieros:", error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, periodo]);
 
   useEffect(() => {
-    fetchFinanzas();
-  }, [fetchFinanzas]);
+    fetchCurrentPeriodData();
+  }, [fetchCurrentPeriodData]);
   //#endregion
 
   //#region Gastos Funciones
+  //actualiza la info cuando se agrega un gasto y cierra modal
+  const handleGastoAgregado = async () => {
+    setModalOpen(false);
+    setLoading(true);
+    await fetchCurrentPeriodData();
+    setLoading(false);
+  };
+
   const handleDeleteExpense = async (gastoId: number) => {
     if (!user || !finanzas || gastoId === undefined) return;
 
@@ -188,14 +212,28 @@ export default function Dashboard() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl">
         <div className="w-full max-w-lg bg-white shadow-md rounded-xl p-4">
-          <h6 className="text-xl font-bold text-gray-800  m-0 ">
-            Estado del mes{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              periodo
-            )}
-          </h6>
+          {periodosDisponibles.length > 0 && (
+            <div className="my-4 flex">
+              <h6 className="text-xl font-bold text-gray-800  m-0 ">
+                Estado del mes{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : null}
+              </h6>
+              <select
+                value={periodo}
+                onChange={(e) => setPeriodo(e.target.value)}
+                className="border rounded-md p-2 ml-2 text-sm font-semibold w-32 "
+              >
+                {periodosDisponibles.map((p) => (
+                  <option key={p} value={p} className="text-sm">
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <p>
             Ingresos:{" "}
             {loading ? (
@@ -275,7 +313,7 @@ export default function Dashboard() {
                 ></div>
               ))}
             </div>
-          ) : finanzas?.gastosVariables.length && user ? (
+          ) : finanzas?.gastosVariables?.length && user ? (
             <div className="space-y-4">
               {finanzas?.gastosVariables
                 .sort((a, b) => dayjs(b.fecha).diff(dayjs(a.fecha)))
@@ -298,9 +336,9 @@ export default function Dashboard() {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleOpenEditModal(gasto)}
-                        className="text-gray hover:underline border-none bg-none rounded-full "
+                        className="text-gray-900 hover:underline border-none bg-none rounded-full "
                       >
-                        <Edit className="m-1" />
+                        <Edit className="m-1 text-gray-900" />
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(gasto.id)}
@@ -341,7 +379,7 @@ export default function Dashboard() {
                   : prev
               )
             }
-            sx={{ marginBottom: "1rem" }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
           />
           <TextField
             label="Monto"
@@ -353,7 +391,7 @@ export default function Dashboard() {
                 prev ? { ...prev, monto: Number(e.target.value) } : prev
               )
             }
-            sx={{ marginBottom: "1rem" }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
           />
           <DateWrapper>
             <DatePicker
@@ -391,7 +429,7 @@ export default function Dashboard() {
       <AgregarGastos
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onGastoAgregado={() => setModalOpen(false)}
+        onGastoAgregado={handleGastoAgregado}
         periodo={periodo}
       />
     </div>
