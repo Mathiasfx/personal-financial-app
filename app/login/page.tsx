@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
+import imagepreview from "../../public/images/dashboard_preview.png";
 
 import { TextField, Button, Divider, CircularProgress } from "@mui/material";
 import Link from "next/link";
@@ -60,7 +61,7 @@ export default function LoginPage() {
   };
   if (loading) {
     return (
-      <div className="flex flex-1 justify-center items-center">
+      <div className="flex flex-1 h-screen justify-center items-center">
         <CircularProgress size="3rem" sx={{ color: "#171717" }} />
       </div>
     );
@@ -138,6 +139,9 @@ export default function LoginPage() {
               Regístrate
             </Link>
           </p>
+          <div className="flex justify-center md:justify-end">
+            <p className="text-xs">Version: 1.0.1</p>
+          </div>
         </div>
         {/* Sección Derecha - Imagen */}
         <div className="hidden md:flex bg-[#171717] text-white flex-col justify-center items-center p-10 min-h-[900px] rounded-xl">
@@ -146,10 +150,10 @@ export default function LoginPage() {
           </h5>
 
           <Image
-            src="/images/dashboard-preview.png"
+            src={imagepreview}
             alt="Dashboard Preview"
-            width={100}
-            height={100}
+            width={700}
+            height={200}
             className="w-full max-w-xs rounded-lg shadow-lg"
           />
         </div>

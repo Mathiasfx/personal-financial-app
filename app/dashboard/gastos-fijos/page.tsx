@@ -7,7 +7,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
-import { Add, Edit } from "@mui/icons-material";
+import { Add, DeleteRounded, Edit } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import {
   getFinancialData,
@@ -15,10 +15,15 @@ import {
   updateExpenseStatus,
   addExpense,
   updateExpense,
+  deleteFixedExpense,
 } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
 import { Gasto, GastoFijo } from "@/models/gasto.model";
 import { Switch } from "@mui/material";
+import DateWrapper from "../components/DateWrapper";
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import { sumaGastoFijoTotal } from "@/lib/utils";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("es-AR", {
@@ -39,6 +44,7 @@ export default function GastosFijosPage() {
     gastosVariables: Gasto[];
   }
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
+  const [total, setTotal] = useState(0);
   const [periodo, setPeriodo] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -50,7 +56,7 @@ export default function GastosFijosPage() {
     monto: 0,
     descripcion: "",
     pagado: false,
-    fechaVencimiento: undefined,
+    fechaVencimiento: Timestamp.fromDate(dayjs().toDate()),
   });
 
   useEffect(() => {
@@ -66,12 +72,16 @@ export default function GastosFijosPage() {
       )) as Finanzas;
       if (data !== null) {
         setFinanzas(data);
+        if (finanzas?.gastosFijos) {
+          setTotal(sumaGastoFijoTotal(Object.values(finanzas.gastosFijos)));
+        }
       }
     };
 
     fetchFinanzas();
-  }, [user]);
+  }, [user, finanzas?.gastosFijos]);
 
+  //#region Manejar estado del gasto
   const handleTogglePayment = async (gastoNombre: string, pagado: boolean) => {
     if (!user || !finanzas) return;
 
@@ -95,7 +105,9 @@ export default function GastosFijosPage() {
       });
     }
   };
+  //#endregion
 
+  //#region Editar Gasto Fijo
   const handleOpenEditModal = (gastoNombre: string, gasto: GastoFijo) => {
     if (gasto !== null) {
       setGastoEditando({ ...gasto, descripcion: gastoNombre });
@@ -122,9 +134,24 @@ export default function GastosFijosPage() {
           },
         };
       });
+      setGastoEditando({
+        id: 0,
+        fecha: "",
+        categoria: { id: "", nombre: "", icono: "" },
+        monto: 0,
+        descripcion: "",
+        pagado: false,
+        fechaVencimiento: Timestamp.fromDate(dayjs().toDate()),
+      });
       setEditModalOpen(false);
     }
+    if (finanzas?.gastosFijos) {
+      setTotal(sumaGastoFijoTotal(Object.values(finanzas.gastosFijos)));
+    }
   };
+  //#endregion
+
+  //#region Agregar Gasto Fijo
   const handleAddGastoFijo = async () => {
     if (!user || !nuevoGasto.descripcion || !nuevoGasto.monto) return;
 
@@ -150,14 +177,50 @@ export default function GastosFijosPage() {
           },
         };
       });
+
+      setNuevoGasto({
+        id: 0,
+        fecha: "",
+        categoria: { id: "", nombre: "", icono: "" },
+        monto: 0,
+        descripcion: "",
+        pagado: false,
+        fechaVencimiento: Timestamp.fromDate(dayjs().toDate()),
+      });
       setAddModalOpen(false);
     }
   };
+  //#endregion
+
+  //#region Eliminar Gasto Fijo
+  const handleDeleteGastoFijo = async (gastoNombre: string) => {
+    if (!user || !finanzas) return;
+
+    const success = await deleteFixedExpense(user.uid, periodo, gastoNombre);
+    if (success) {
+      setFinanzas((prev) => {
+        if (!prev) return prev;
+        const updatedGastosFijos = { ...prev.gastosFijos };
+        delete updatedGastosFijos[gastoNombre];
+        return {
+          ...prev,
+          gastosFijos: updatedGastosFijos,
+        };
+      });
+    }
+  };
+  //#endregion
 
   return (
     <div className="p-0 md:p-4">
       <div className="flex max-w-screen-lg justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Gastos Fijos</h1>
+        <div className="w-full flex-col items-start md:w-80 md:flex-row flex flex-1 justify-start md:items-center">
+          <h1 className="text-xl font-bold m-0 md:mr-5">Gastos Fijos</h1>
+          <h2 className="m-0 text-xl font-medium text-gray-700 ">
+            Total: {formatCurrency(total)}
+          </h2>
+        </div>
+
         <button
           className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300   mb-2"
           onClick={() => setAddModalOpen(true)}
@@ -199,6 +262,12 @@ export default function GastosFijosPage() {
                   >
                     <Edit className="w-5 h-5 text-gray-700 m-1 " />
                   </button>
+                  <button
+                    onClick={() => handleDeleteGastoFijo(nombre)}
+                    className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                  >
+                    <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
+                  </button>
                 </div>
               </div>
             ))
@@ -231,17 +300,46 @@ export default function GastosFijosPage() {
           />
           <TextField
             label="Monto"
-            type="number"
+            inputMode="decimal"
+            type="text"
             fullWidth
-            value={nuevoGasto.monto}
-            onChange={(e) =>
+            value={nuevoGasto.monto.toString()}
+            onChange={(e) => {
+              let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+              rawValue = rawValue.replace(",", ".");
               setNuevoGasto({
                 ...nuevoGasto,
-                monto: parseFloat(e.target.value),
-              })
-            }
+                monto: rawValue === "" ? 0 : parseFloat(rawValue) || 0,
+              });
+            }}
+            onBlur={() => {
+              setNuevoGasto((prev) => ({
+                ...prev,
+                monto: prev.monto ? Number(prev.monto) : 0,
+              }));
+            }}
             sx={{ marginBottom: "1rem" }}
           />
+
+          <DateWrapper>
+            <DatePicker
+              label="Fecha de Vencimiento"
+              value={
+                nuevoGasto.fechaVencimiento
+                  ? dayjs(nuevoGasto.fechaVencimiento.toDate())
+                  : null
+              }
+              onChange={(newValue) => {
+                setNuevoGasto({
+                  ...nuevoGasto,
+                  fechaVencimiento: newValue
+                    ? Timestamp.fromDate(newValue.toDate())
+                    : undefined,
+                });
+              }}
+              sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
+            ></DatePicker>
+          </DateWrapper>
         </DialogContent>
         <DialogActions>
           <button
@@ -270,18 +368,73 @@ export default function GastosFijosPage() {
         <DialogTitle>Editar Gasto Fijo</DialogTitle>
         <DialogContent>
           <TextField
-            label="Monto"
-            type="number"
+            label="Descripcion"
+            type="text"
             fullWidth
-            defaultValue={gastoEditando?.monto}
-            onChange={(e) =>
+            value={gastoEditando?.descripcion}
+            disabled
+            sx={{ marginTop: "1rem" }}
+          ></TextField>
+          <TextField
+            label="Monto"
+            inputMode="decimal"
+            type="text"
+            fullWidth
+            value={gastoEditando?.monto ? gastoEditando.monto.toString() : ""}
+            onChange={(e) => {
+              let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+              rawValue = rawValue.replace(",", ".");
               setGastoEditando((prev) =>
-                prev ? { ...prev, monto: parseFloat(e.target.value) } : null
-              )
-            }
+                prev
+                  ? {
+                      ...prev,
+                      monto: rawValue === "" ? 0 : parseFloat(rawValue) || 0,
+                    }
+                  : null
+              );
+            }}
+            onBlur={() => {
+              setGastoEditando((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      monto: prev.monto ? Number(prev.monto) : 0,
+                    }
+                  : null
+              );
+            }}
             sx={{ marginTop: "1rem" }}
           />
+
+          <DateWrapper>
+            {gastoEditando && gastoEditando.fechaVencimiento ? (
+              <DatePicker
+                label="Fecha de Vencimiento"
+                value={
+                  gastoEditando.fechaVencimiento
+                    ? dayjs(gastoEditando.fechaVencimiento.toDate())
+                    : null
+                }
+                onChange={(newValue) => {
+                  if (newValue) {
+                    setGastoEditando((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            fechaVencimiento: Timestamp.fromDate(
+                              newValue.toDate()
+                            ),
+                          }
+                        : null
+                    );
+                  }
+                }}
+                sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
+              ></DatePicker>
+            ) : null}
+          </DateWrapper>
         </DialogContent>
+
         <DialogActions>
           <button
             className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none "

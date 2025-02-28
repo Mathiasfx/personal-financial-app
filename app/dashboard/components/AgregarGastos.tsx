@@ -61,7 +61,7 @@ const AgregarGastos = ({
       monto: parseFloat(monto),
       categoria,
       fecha: fecha.toISOString(),
-      id: Date.now(), // ID temporal
+      id: Date.now(),
     };
 
     try {
@@ -73,6 +73,11 @@ const AgregarGastos = ({
       onClose(); // Cierra el modal
     } catch (error) {
       console.error("Error al guardar el gasto:", error);
+    } finally {
+      setDescripcion("");
+      setMonto("");
+      setCategoria(null);
+      setFecha(dayjs());
     }
   };
   return (
