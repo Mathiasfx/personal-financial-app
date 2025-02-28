@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@mui/material";
 import { Timestamp } from "firebase/firestore/lite";
+import { DeleteRounded, Edit } from "@mui/icons-material";
 
 interface PeriodDoc {
   id: string;
@@ -149,10 +150,10 @@ export default function PeriodosAdminPage() {
       <h1 className="text-xl font-bold mb-4">Administrar Períodos</h1>
 
       <button
-        className="px-4 py-2 bg-gray-800 text-white rounded-lg mb-4"
+        className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none mb-2"
         onClick={handleOpenCreate}
       >
-        Crear Nuevo Período
+        <span className="text-sm font-bold"> Crear Nuevo Período</span>
       </button>
 
       {loading && <p>Cargando...</p>}
@@ -162,47 +163,49 @@ export default function PeriodosAdminPage() {
       )}
 
       {!loading && periods.length > 0 && (
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-100 border-b">
-              <th className="px-2 py-2">Período (ID)</th>
-              <th className="px-2 py-2">Ingresos</th>
-              <th className="px-2 py-2">Inversiones</th>
-              <th className="px-2 py-2">Fecha de Cobro</th>
-              <th className="px-2 py-2">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {periods.map((p) => (
-              <tr key={p.id} className="border-b">
-                <td className="px-2 py-2">{p.id}</td>
-                <td className="px-2 py-2">
-                  {formatCurrency(p.data.ingresos) || 0}
-                </td>
-                <td className="px-2 py-2">
-                  {formatCurrency(p.data.inversiones) || 0}
-                </td>
-                <td className="px-2 py-2">
-                  {dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")}
-                </td>
-                <td className="px-2 py-2">
-                  <button
-                    onClick={() => handleOpenEdit(p)}
-                    className="mr-2 px-2 py-1 bg-yellow-400 rounded-md text-sm"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="px-2 py-1 bg-red-400 rounded-md text-sm"
-                  >
-                    Borrar
-                  </button>
-                </td>
+        <div className="bg-white rounded-3xl p-3">
+          <table className="w-full text-left border-collapse ">
+            <thead className="bg-gray-100 border-b rounded-3xl">
+              <tr>
+                <th className="px-2 py-2">Período (ID)</th>
+                <th className="px-2 py-2">Ingresos</th>
+                <th className="px-2 py-2">Inversiones</th>
+                <th className="px-2 py-2">Fecha de Cobro</th>
+                <th className="px-2 py-2">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {periods.map((p) => (
+                <tr key={p.id} className="border-b">
+                  <td className="px-2 py-2">{p.id}</td>
+                  <td className="px-2 py-2">
+                    {formatCurrency(p.data.ingresos) || 0}
+                  </td>
+                  <td className="px-2 py-2">
+                    {formatCurrency(p.data.inversiones) || 0}
+                  </td>
+                  <td className="px-2 py-2">
+                    {dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")}
+                  </td>
+                  <td className="px-2 py-2">
+                    <button
+                      onClick={() => handleOpenEdit(p)}
+                      className="rounded-full border-none mr-1 bg-gray-300 hover:bg-gray-400 transition-all"
+                    >
+                      <Edit className="w-5 h-5 text-gray-700 m-1 " />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                    >
+                      <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {formState && (

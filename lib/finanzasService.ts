@@ -350,8 +350,6 @@ export const updateExpense = async (
   }
 };
 
-
-
 //actualizar estado de gasto fijo
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
   try {
@@ -367,6 +365,34 @@ export const updateExpenseStatus = async (userId: string, yearMonth: string, exp
   }
 };
 
+//delete gasto fijo
+export const deleteFixedExpense = async (userId: string, periodo: string, descripcion: string) => {
+  try {
+    const finanzasRef = doc(db, `usuarios/${userId}/finanzas/${periodo}`);
+    const snapshot = await getDoc(finanzasRef);
+
+    if (!snapshot.exists()) {
+      console.error("No existen datos financieros para este período.");
+      return false;
+    }
+
+    const data = snapshot.data();
+    if (!data.gastosFijos || !data.gastosFijos[descripcion]) {
+      console.error("El gasto fijo no existe.");
+      return false;
+    }
+
+    const updatedGastosFijos = { ...data.gastosFijos };
+    delete updatedGastosFijos[descripcion];
+
+    await updateDoc(finanzasRef, { gastosFijos: updatedGastosFijos });
+    console.log("Gasto fijo eliminado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("Error al eliminar el gasto fijo:", error);
+    return false;
+  }
+};
 
 //#endregion
 

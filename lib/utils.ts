@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import dayjs from 'dayjs';
+import { GastoFijo } from "@/models/gasto.model";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -25,4 +26,8 @@ export function getPreviousPeriod(yearMonth: string): string {
   const periodDayjs = dayjs(`${year}-${month}-01`);
   // Restamos 1 mes
   return periodDayjs.subtract(1, "month").format("YYYY-MM");
+}
+
+export function sumaGastoFijoTotal(costos:GastoFijo[]):number {
+  return costos.reduce((total, costo) => total + costo.monto, 0);
 }
