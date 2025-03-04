@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -56,7 +57,7 @@ export default function GastosFijosPage() {
     monto: 0,
     descripcion: "",
     pagado: false,
-    fechaVencimiento: Timestamp.fromDate(dayjs().toDate()),
+    fechaVencimiento: dayjs().toDate(),
   });
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export default function GastosFijosPage() {
         monto: 0,
         descripcion: "",
         pagado: false,
-        fechaVencimiento: Timestamp.fromDate(dayjs().toDate()),
+        fechaVencimiento: dayjs().toDate(),
       });
       setEditModalOpen(false);
     }
@@ -185,7 +186,7 @@ export default function GastosFijosPage() {
         monto: 0,
         descripcion: "",
         pagado: false,
-        fechaVencimiento: Timestamp.fromDate(dayjs().toDate()),
+        fechaVencimiento: dayjs().toDate(),
       });
       setAddModalOpen(false);
     }
@@ -234,43 +235,84 @@ export default function GastosFijosPage() {
         {/* Card contenedor */}
         <div className="bg-white shadow-md rounded-2xl p-6 min-h-[180px]">
           {finanzas?.gastosFijos ? (
-            Object.entries(finanzas.gastosFijos).map(([nombre, gasto]) => (
-              <div
-                key={nombre}
-                className="flex justify-between items-center bg-gray-100 p-4 rounded-xl shadow-sm w-full mb-3"
-              >
-                <div>
-                  <p className="text-lg font-bold">{nombre}</p>
-                  <p className="text-sm text-gray-500">
-                    Monto: {formatCurrency(gasto.monto)}
-                  </p>
-                  {gasto.fechaVencimiento && (
+            Object.entries(finanzas.gastosFijos)
+              .sort(([_, gastoA], [__, gastoB]) => {
+                // 1) Convertir fecha de A a Date (o null si no hay fecha).
+                const fechaA = gastoA.fechaVencimiento
+                  ? gastoA.fechaVencimiento instanceof Date
+                    ? gastoA.fechaVencimiento
+                    : (gastoA.fechaVencimiento as Timestamp).toDate()
+                  : null;
+
+                // 2) Convertir fecha de B a Date (o null si no hay fecha).
+                const fechaB = gastoB.fechaVencimiento
+                  ? gastoB.fechaVencimiento instanceof Date
+                    ? gastoB.fechaVencimiento
+                    : (gastoB.fechaVencimiento as Timestamp).toDate()
+                  : null;
+
+                // 3) Comparación
+                if (fechaA && fechaB) {
+                  // Ambos tienen fecha: ordenar por fecha (ascendente)
+                  return fechaA.getTime() - fechaB.getTime();
+                } else if (fechaA && !fechaB) {
+                  // A tiene fecha y B no
+                  //   => si quieres que "sin fecha" quede AL FINAL, retorna -1 aquí.
+                  //      si quieres que quede al PRINCIPIO, retorna 1.
+                  return -1;
+                } else if (!fechaA && fechaB) {
+                  // B tiene fecha y A no
+                  //   => si quieres que "sin fecha" quede AL FINAL, retorna 1 aquí.
+                  //      si quieres que quede al PRINCIPIO, retorna -1.
+                  return 1;
+                } else {
+                  // Ninguno tiene fecha
+                  return 0;
+                }
+              })
+              .map(([nombre, gasto]) => (
+                <div
+                  key={nombre}
+                  className="flex justify-between items-center bg-gray-100 p-4 rounded-xl shadow-sm w-full mb-3"
+                >
+                  <div>
+                    <p className="text-lg font-bold">{nombre}</p>
                     <p className="text-sm text-gray-500">
-                      {gasto.fechaVencimiento.toDate().toLocaleDateString()}
+                      Monto: {formatCurrency(gasto.monto)}
                     </p>
-                  )}
+                    {gasto.fechaVencimiento && (
+                      <p className="text-sm text-gray-500">
+                        {(gasto.fechaVencimiento instanceof Date
+                          ? gasto.fechaVencimiento // ya es Date
+                          : (gasto.fechaVencimiento as Timestamp).toDate()
+                        ) // si es Timestamp, conviértelo
+                          .toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={gasto.pagado}
+                      onChange={() =>
+                        handleTogglePayment(nombre, !gasto.pagado)
+                      }
+                      color="success"
+                    />
+                    <button
+                      onClick={() => handleOpenEditModal(nombre, gasto)}
+                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                    >
+                      <Edit className="w-5 h-5 text-gray-700 m-1 " />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGastoFijo(nombre)}
+                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                    >
+                      <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={gasto.pagado}
-                    onChange={() => handleTogglePayment(nombre, !gasto.pagado)}
-                    color="success"
-                  />
-                  <button
-                    onClick={() => handleOpenEditModal(nombre, gasto)}
-                    className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                  >
-                    <Edit className="w-5 h-5 text-gray-700 m-1 " />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteGastoFijo(nombre)}
-                    className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                  >
-                    <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
-                  </button>
-                </div>
-              </div>
-            ))
+              ))
           ) : (
             <p className="text-gray-500 text-center">
               No hay gastos fijos registrados.
@@ -326,15 +368,13 @@ export default function GastosFijosPage() {
               label="Fecha de Vencimiento"
               value={
                 nuevoGasto.fechaVencimiento
-                  ? dayjs(nuevoGasto.fechaVencimiento.toDate())
+                  ? dayjs(nuevoGasto.fechaVencimiento)
                   : null
               }
               onChange={(newValue) => {
                 setNuevoGasto({
                   ...nuevoGasto,
-                  fechaVencimiento: newValue
-                    ? Timestamp.fromDate(newValue.toDate())
-                    : undefined,
+                  fechaVencimiento: newValue ? newValue.toDate() : undefined,
                 });
               }}
               sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
@@ -407,12 +447,12 @@ export default function GastosFijosPage() {
           />
 
           <DateWrapper>
-            {gastoEditando && gastoEditando.fechaVencimiento ? (
+            {gastoEditando && (
               <DatePicker
                 label="Fecha de Vencimiento"
                 value={
                   gastoEditando.fechaVencimiento
-                    ? dayjs(gastoEditando.fechaVencimiento.toDate())
+                    ? dayjs(gastoEditando.fechaVencimiento)
                     : null
                 }
                 onChange={(newValue) => {
@@ -421,9 +461,7 @@ export default function GastosFijosPage() {
                       prev
                         ? {
                             ...prev,
-                            fechaVencimiento: Timestamp.fromDate(
-                              newValue.toDate()
-                            ),
+                            fechaVencimiento: newValue.toDate(),
                           }
                         : null
                     );
@@ -431,7 +469,7 @@ export default function GastosFijosPage() {
                 }}
                 sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
               ></DatePicker>
-            ) : null}
+            )}
           </DateWrapper>
         </DialogContent>
 

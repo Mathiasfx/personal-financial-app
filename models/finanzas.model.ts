@@ -10,7 +10,7 @@ import { Gasto } from "./gasto.model";
       [key: string]: {
         monto: number;
         pagado: boolean;
-        fechaVencimiento?: Timestamp;
+        fechaVencimiento?:Date;
       };
     };
     gastosVariables: Gasto[];

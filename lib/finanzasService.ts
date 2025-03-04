@@ -301,10 +301,15 @@ export const addExpense = async (userId: string, periodo: string, nuevoGasto:Gas
     const data = snapshot.data();
     const updatedGastosFijos = {
       ...data.gastosFijos,
-      [nuevoGasto.descripcion]: { monto: parseFloat(nuevoGasto.monto.toString()), pagado: nuevoGasto.pagado },
+      [nuevoGasto.descripcion]: {
+        ...nuevoGasto, // Esto incluye id, fecha, categoria, pagado, fechaVencimiento, etc.
+        monto: parseFloat(nuevoGasto.monto.toString()),
+      },
     };
 
-    await updateDoc(finanzasRef, { gastosFijos: updatedGastosFijos });
+    await updateDoc(finanzasRef, {
+      gastosFijos: updatedGastosFijos,
+    });
     console.log("Gasto fijo agregado correctamente.");
     return true;
   } catch (error) {
@@ -336,9 +341,8 @@ export const updateExpense = async (
  
     await updateDoc(finanzasRef, {
       [`gastosFijos.${updatedGasto.descripcion}`]: {
-        monto: parseFloat(updatedGasto.monto.toString()),
-        pagado: updatedGasto.pagado,
-      
+        ...updatedGasto, // esto clona id, fecha, fechaVencimiento, etc.
+        monto: parseFloat(updatedGasto.monto.toString()), // sobreescribe monto
       },
     });
 
@@ -349,6 +353,7 @@ export const updateExpense = async (
     return false;
   }
 };
+
 
 //actualizar estado de gasto fijo
 export const updateExpenseStatus = async (userId: string, yearMonth: string, expenseKey: string, status: boolean) => {
