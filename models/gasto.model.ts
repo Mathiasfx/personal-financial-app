@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+
 
 export interface Gasto {
     id: number;
@@ -14,6 +14,6 @@ export interface Gasto {
   
   export interface GastoFijo extends Gasto{
     pagado:boolean,
-    fechaVencimiento?:Timestamp 
+    fechaVencimiento?:Date
 
   }

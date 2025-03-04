@@ -28,7 +28,7 @@ export default function Dashboard() {
 
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
-  const [periodo, setPeriodo] = useState(dayjs().format("YYYY-MM")); // Por defecto, el mes actual
+  const [periodo, setPeriodo] = useState(dayjs().format("YYYY-MM"));
   const [loading, setLoading] = useState<boolean>(true);
   const [numGastos, setNumGastos] = useState(10);
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
@@ -80,7 +80,9 @@ export default function Dashboard() {
     return (
       (finanzas?.ingresos || 0) +
       (finanzas?.ingresosExtras || 0) -
-      (totalGastosFijos + totalGastosVariables)
+      (totalGastosFijos +
+        totalGastosVariables +
+        (finanzas?.inversiones ? finanzas.inversiones : 0))
     );
   }, [finanzas, totalGastosFijos, totalGastosVariables]);
   //#endregion
