@@ -107,7 +107,6 @@ export default function GastosFijosPage() {
 
   const handleEditGasto = async () => {
     if (!user || !finanzas || !gastoEditando) return;
-    console.log(gastoEditando);
 
     const success = await updateExpense(user.uid, periodo, gastoEditando);
 
@@ -226,36 +225,25 @@ export default function GastosFijosPage() {
           {finanzas?.gastosFijos ? (
             Object.entries(finanzas.gastosFijos)
               .sort(([_, gastoA], [__, gastoB]) => {
-                // 1) Convertir fecha de A a Date (o null si no hay fecha).
                 const fechaA = gastoA.fechaVencimiento
                   ? gastoA.fechaVencimiento instanceof Date
                     ? gastoA.fechaVencimiento
                     : (gastoA.fechaVencimiento as Timestamp).toDate()
                   : null;
 
-                // 2) Convertir fecha de B a Date (o null si no hay fecha).
                 const fechaB = gastoB.fechaVencimiento
                   ? gastoB.fechaVencimiento instanceof Date
                     ? gastoB.fechaVencimiento
                     : (gastoB.fechaVencimiento as Timestamp).toDate()
                   : null;
 
-                // 3) Comparación
                 if (fechaA && fechaB) {
-                  // Ambos tienen fecha: ordenar por fecha (ascendente)
                   return fechaA.getTime() - fechaB.getTime();
                 } else if (fechaA && !fechaB) {
-                  // A tiene fecha y B no
-                  //   => si quieres que "sin fecha" quede AL FINAL, retorna -1 aquí.
-                  //      si quieres que quede al PRINCIPIO, retorna 1.
                   return -1;
                 } else if (!fechaA && fechaB) {
-                  // B tiene fecha y A no
-                  //   => si quieres que "sin fecha" quede AL FINAL, retorna 1 aquí.
-                  //      si quieres que quede al PRINCIPIO, retorna -1.
                   return 1;
                 } else {
-                  // Ninguno tiene fecha
                   return 0;
                 }
               })
@@ -274,8 +262,7 @@ export default function GastosFijosPage() {
                         {(gasto.fechaVencimiento instanceof Date
                           ? gasto.fechaVencimiento // ya es Date
                           : (gasto.fechaVencimiento as Timestamp).toDate()
-                        ) // si es Timestamp, conviértelo
-                          .toLocaleDateString()}
+                        ).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -365,6 +352,7 @@ export default function GastosFijosPage() {
           <DateWrapper>
             <DatePicker
               label="Fecha de Vencimiento"
+              format="DD/MM/YYYY"
               value={
                 nuevoGasto.fechaVencimiento
                   ? dayjs(nuevoGasto.fechaVencimiento)
