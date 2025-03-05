@@ -171,8 +171,6 @@ export default function GastosFijosPage() {
       });
 
       setNuevoGasto({
-        id: 0,
-        fecha: "",
         categoria: { id: "", nombre: "", icono: "" },
         monto: 0,
         descripcion: "",
