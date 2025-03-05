@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
 import { useEffect, useState } from "react";
-
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -24,26 +22,11 @@ import { Switch } from "@mui/material";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { sumaGastoFijoTotal } from "@/lib/utils";
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
+import { formatCurrency, sumaGastoFijoTotal } from "@/lib/utils";
+import { Finanzas } from "@/models/finanzas.model";
 
 export default function GastosFijosPage() {
   const { user } = useAuth();
-  interface Finanzas {
-    ingresos: number;
-    ingresosExtras: number;
-    inversiones: number;
-    fechaCobro: Timestamp;
-    gastosFijos: Record<string, GastoFijo>;
-    gastosVariables: Gasto[];
-  }
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [total, setTotal] = useState(0);
   const [periodo, setPeriodo] = useState("");
@@ -51,8 +34,6 @@ export default function GastosFijosPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [gastoEditando, setGastoEditando] = useState<GastoFijo | null>(null);
   const [nuevoGasto, setNuevoGasto] = useState<GastoFijo>({
-    id: 0,
-    fecha: "",
     categoria: { id: "", nombre: "", icono: "" },
     monto: 0,
     descripcion: "",
@@ -60,11 +41,11 @@ export default function GastosFijosPage() {
     fechaVencimiento: dayjs().toDate(),
   });
 
+  //#region Fetch Finanzas Periodo Actual
   useEffect(() => {
     if (!user) return;
     const fetchFinanzas = async () => {
       const periodoActual = await getLatestFinancialPeriod(user.uid);
-
       setPeriodo(periodoActual);
 
       const data = (await getFinancialData(
@@ -73,14 +54,22 @@ export default function GastosFijosPage() {
       )) as Finanzas;
       if (data !== null) {
         setFinanzas(data);
-        if (finanzas?.gastosFijos) {
-          setTotal(sumaGastoFijoTotal(Object.values(finanzas.gastosFijos)));
-        }
       }
     };
 
     fetchFinanzas();
-  }, [user, finanzas?.gastosFijos]);
+  }, [user]);
+  //#endregion
+
+  //#region Set Total de Gastos Fijos
+  useEffect(() => {
+    if (finanzas?.gastosFijos) {
+      setTotal(
+        sumaGastoFijoTotal(Object.values(finanzas.gastosFijos) as GastoFijo[])
+      );
+    }
+  }, [finanzas?.gastosFijos]);
+  //#endregion
 
   //#region Manejar estado del gasto
   const handleTogglePayment = async (gastoNombre: string, pagado: boolean) => {
@@ -118,6 +107,7 @@ export default function GastosFijosPage() {
 
   const handleEditGasto = async () => {
     if (!user || !finanzas || !gastoEditando) return;
+    console.log(gastoEditando);
 
     const success = await updateExpense(user.uid, periodo, gastoEditando);
 
@@ -131,14 +121,15 @@ export default function GastosFijosPage() {
             [gastoEditando.descripcion]: {
               ...prev.gastosFijos[gastoEditando.descripcion],
               monto: gastoEditando.monto,
+              fechaVencimiento:
+                gastoEditando.fechaVencimiento instanceof Timestamp
+                  ? gastoEditando.fechaVencimiento.toDate()
+                  : gastoEditando.fechaVencimiento,
             },
           },
         };
       });
       setGastoEditando({
-        id: 0,
-        fecha: "",
-        categoria: { id: "", nombre: "", icono: "" },
         monto: 0,
         descripcion: "",
         pagado: false,
@@ -147,7 +138,9 @@ export default function GastosFijosPage() {
       setEditModalOpen(false);
     }
     if (finanzas?.gastosFijos) {
-      setTotal(sumaGastoFijoTotal(Object.values(finanzas.gastosFijos)));
+      setTotal(
+        sumaGastoFijoTotal(Object.values(finanzas.gastosFijos) as GastoFijo[])
+      );
     }
   };
   //#endregion
@@ -165,8 +158,6 @@ export default function GastosFijosPage() {
           gastosFijos: {
             ...prev.gastosFijos,
             [nuevoGasto.descripcion]: {
-              id: nuevoGasto.id,
-              fecha: nuevoGasto.fecha,
               categoria: nuevoGasto.categoria,
               monto: parseFloat(nuevoGasto.monto.toString()),
               descripcion: nuevoGasto.descripcion,
@@ -299,7 +290,17 @@ export default function GastosFijosPage() {
                       color="success"
                     />
                     <button
-                      onClick={() => handleOpenEditModal(nombre, gasto)}
+                      onClick={() =>
+                        handleOpenEditModal(nombre, {
+                          ...gasto,
+                          descripcion: nombre,
+                          categoria: gasto.categoria || {
+                            id: "",
+                            nombre: "",
+                            icono: "",
+                          },
+                        })
+                      }
                       className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
                     >
                       <Edit className="w-5 h-5 text-gray-700 m-1 " />
@@ -449,10 +450,13 @@ export default function GastosFijosPage() {
           <DateWrapper>
             {gastoEditando && (
               <DatePicker
+                format="DD/MM/YYYY"
                 label="Fecha de Vencimiento"
                 value={
                   gastoEditando.fechaVencimiento
-                    ? dayjs(gastoEditando.fechaVencimiento)
+                    ? gastoEditando.fechaVencimiento instanceof Timestamp
+                      ? dayjs(gastoEditando.fechaVencimiento.toDate())
+                      : dayjs(gastoEditando.fechaVencimiento)
                     : null
                 }
                 onChange={(newValue) => {

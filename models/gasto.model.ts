@@ -1,5 +1,6 @@
 
 
+
 export interface Gasto {
     id: number;
     descripcion: string;
@@ -12,8 +13,15 @@ export interface Gasto {
     };
   }
   
-  export interface GastoFijo extends Gasto{
+  export interface GastoFijo {
+    descripcion:string,
+    monto:number,
     pagado:boolean,
+    categoria?:{
+      id: string;
+      nombre: string;
+      icono: string;
+    };
     fechaVencimiento?:Date
 
   }

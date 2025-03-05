@@ -8,6 +8,7 @@ import { Gasto } from "./gasto.model";
     fechaCobro: Timestamp ;
     gastosFijos: {
       [key: string]: {
+        categoria?: { id: string; nombre: string; icono: string; };      
         monto: number;
         pagado: boolean;
         fechaVencimiento?:Date;
