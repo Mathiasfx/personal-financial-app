@@ -40,6 +40,7 @@ export default function PeriodosAdminPage() {
     oldId?: string; // si existe => edit
     yearMonth: string; // ID del doc
     ingresos: number;
+    ingresosExtras: number;
     inversiones: number;
     fechaCobro: Dayjs | null;
   } | null>(null);
@@ -76,6 +77,7 @@ export default function PeriodosAdminPage() {
       oldId: undefined,
       yearMonth: dayjs().format("YYYY-MM"), // Por defecto hoy
       ingresos: 0,
+      ingresosExtras: 0,
       inversiones: 0,
       fechaCobro: null,
     });
@@ -88,6 +90,7 @@ export default function PeriodosAdminPage() {
       oldId: period.id,
       yearMonth: period.id,
       ingresos: period.data.ingresos || 0,
+      ingresosExtras: period.data.ingresosExtras || 0,
       inversiones: period.data.inversiones || 0,
       fechaCobro: period.data.fechaCobro
         ? dayjs(period.data.fechaCobro.toDate())
@@ -99,11 +102,19 @@ export default function PeriodosAdminPage() {
   // Guardar (crear o editar)
   async function handleSubmitForm() {
     if (!formState || !user) return;
-    const { oldId, yearMonth, ingresos, inversiones, fechaCobro } = formState;
+    const {
+      oldId,
+      yearMonth,
+      ingresos,
+      ingresosExtras,
+      inversiones,
+      fechaCobro,
+    } = formState;
 
     try {
       const dataToSave = {
         ingresos,
+        ingresosExtras,
         inversiones,
         fechaCobro: fechaCobro ? Timestamp.fromDate(fechaCobro.toDate()) : null,
       };
@@ -169,6 +180,7 @@ export default function PeriodosAdminPage() {
               <tr>
                 <th className="px-2 py-2">Período (ID)</th>
                 <th className="px-2 py-2">Ingresos</th>
+                <th className="px-2 py-2">Ingresos Extras</th>
                 <th className="px-2 py-2">Inversiones</th>
                 <th className="px-2 py-2">Fecha de Cobro</th>
                 <th className="px-2 py-2">Acciones</th>
@@ -182,10 +194,15 @@ export default function PeriodosAdminPage() {
                     {formatCurrency(p.data.ingresos) || 0}
                   </td>
                   <td className="px-2 py-2">
+                    {formatCurrency(p.data.ingresosExtras) || 0}
+                  </td>
+                  <td className="px-2 py-2">
                     {formatCurrency(p.data.inversiones) || 0}
                   </td>
                   <td className="px-2 py-2">
-                    {dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")}
+                    {p.data.fechaCobro
+                      ? dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")
+                      : ""}
                   </td>
                   <td className="px-2 py-2">
                     <button
@@ -266,6 +283,20 @@ export default function PeriodosAdminPage() {
                 setFormState({
                   ...formState,
                   inversiones: Number(e.target.value),
+                })
+              }
+              sx={{ marginBottom: "1rem" }}
+            />
+            {/* Igresos extras */}
+            <TextField
+              label="Ingresos Extras"
+              type="number"
+              fullWidth
+              value={formState.ingresosExtras}
+              onChange={(e) =>
+                setFormState({
+                  ...formState,
+                  ingresosExtras: Number(e.target.value),
                 })
               }
               sx={{ marginBottom: "1rem" }}

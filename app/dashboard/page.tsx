@@ -236,7 +236,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <p>
+          <p className="text-lg m-0">
             Ingresos:{" "}
             {loading ? (
               <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
@@ -244,7 +244,15 @@ export default function Dashboard() {
               formatCurrency(finanzas?.ingresos || 0)
             )}
           </p>
-          <p>
+          <p className="text-lg m-0">
+            Ingresos Extras:{" "}
+            {loading ? (
+              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+            ) : (
+              formatCurrency(finanzas?.ingresosExtras || 0)
+            )}
+          </p>
+          <p className="text-lg m-0">
             Inversiones:{" "}
             {loading ? (
               <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
@@ -252,7 +260,7 @@ export default function Dashboard() {
               formatCurrency(finanzas?.inversiones || 0)
             )}
           </p>
-          <p>
+          <p className="text-lg m-0">
             Fecha de Cobro:{" "}
             {loading ? (
               <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
@@ -304,7 +312,7 @@ export default function Dashboard() {
       <div className="mt-8 space-y-4">
         <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-7xl ">
           <h6 className="text-xl font-bold text-gray-800 mb-4">
-            Gastos Variables
+            Transacciones de gastos variables
           </h6>
           {loading ? (
             <div className="space-y-4">
@@ -353,7 +361,7 @@ export default function Dashboard() {
                 ))}
             </div>
           ) : (
-            <p className="text-gray-500">No hay gastos variables</p>
+            <p className="text-gray-500">No hay transacciones</p>
           )}
         </div>
       </div>
