@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
 import { useEffect, useState } from "react";
-
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -17,33 +15,20 @@ import {
   addExpense,
   updateExpense,
   deleteFixedExpense,
+  getCategories,
 } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
-import { Gasto, GastoFijo } from "@/models/gasto.model";
-import { Switch } from "@mui/material";
+import { GastoFijo } from "@/models/gasto.model";
+import { MenuItem, Switch } from "@mui/material";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { sumaGastoFijoTotal } from "@/lib/utils";
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
+import { formatCurrency, sumaGastoFijoTotal } from "@/lib/utils";
+import { Finanzas } from "@/models/finanzas.model";
+import { Categorias } from "@/models/categorias.model";
 
 export default function GastosFijosPage() {
   const { user } = useAuth();
-  interface Finanzas {
-    ingresos: number;
-    ingresosExtras: number;
-    inversiones: number;
-    fechaCobro: Timestamp;
-    gastosFijos: Record<string, GastoFijo>;
-    gastosVariables: Gasto[];
-  }
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [total, setTotal] = useState(0);
   const [periodo, setPeriodo] = useState("");
@@ -51,20 +36,31 @@ export default function GastosFijosPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [gastoEditando, setGastoEditando] = useState<GastoFijo | null>(null);
   const [nuevoGasto, setNuevoGasto] = useState<GastoFijo>({
-    id: 0,
-    fecha: "",
     categoria: { id: "", nombre: "", icono: "" },
     monto: 0,
     descripcion: "",
     pagado: false,
     fechaVencimiento: dayjs().toDate(),
   });
+  const [categoriasDB, setCategoriasDB] = useState<Categorias[]>([]);
 
+  //#region Carga de Categorias
+  useEffect(() => {
+    if (user) {
+      const fetchCategorias = async () => {
+        const categorias = await getCategories(user.uid);
+        setCategoriasDB(categorias);
+      };
+      fetchCategorias();
+    }
+  }, [user]);
+  //#endregion
+
+  //#region Fetch Finanzas Periodo Actual
   useEffect(() => {
     if (!user) return;
     const fetchFinanzas = async () => {
       const periodoActual = await getLatestFinancialPeriod(user.uid);
-
       setPeriodo(periodoActual);
 
       const data = (await getFinancialData(
@@ -73,14 +69,22 @@ export default function GastosFijosPage() {
       )) as Finanzas;
       if (data !== null) {
         setFinanzas(data);
-        if (finanzas?.gastosFijos) {
-          setTotal(sumaGastoFijoTotal(Object.values(finanzas.gastosFijos)));
-        }
       }
     };
 
     fetchFinanzas();
-  }, [user, finanzas?.gastosFijos]);
+  }, [user]);
+  //#endregion
+
+  //#region Set Total de Gastos Fijos
+  useEffect(() => {
+    if (finanzas?.gastosFijos) {
+      setTotal(
+        sumaGastoFijoTotal(Object.values(finanzas.gastosFijos) as GastoFijo[])
+      );
+    }
+  }, [finanzas?.gastosFijos]);
+  //#endregion
 
   //#region Manejar estado del gasto
   const handleTogglePayment = async (gastoNombre: string, pagado: boolean) => {
@@ -117,7 +121,16 @@ export default function GastosFijosPage() {
   };
 
   const handleEditGasto = async () => {
-    if (!user || !finanzas || !gastoEditando) return;
+    if (!user || !finanzas || !gastoEditando || !gastoEditando.categoria)
+      return;
+
+    const fechaVencimiento =
+      gastoEditando.fechaVencimiento instanceof Date
+        ? gastoEditando.fechaVencimiento
+        : gastoEditando.fechaVencimiento &&
+          "seconds" in gastoEditando.fechaVencimiento
+        ? new Date(gastoEditando.fechaVencimiento.seconds * 1000)
+        : gastoEditando.fechaVencimiento;
 
     const success = await updateExpense(user.uid, periodo, gastoEditando);
 
@@ -131,32 +144,52 @@ export default function GastosFijosPage() {
             [gastoEditando.descripcion]: {
               ...prev.gastosFijos[gastoEditando.descripcion],
               monto: gastoEditando.monto,
+              fechaVencimiento,
+              categoria: gastoEditando.categoria,
             },
           },
         };
       });
       setGastoEditando({
-        id: 0,
-        fecha: "",
-        categoria: { id: "", nombre: "", icono: "" },
         monto: 0,
         descripcion: "",
         pagado: false,
         fechaVencimiento: dayjs().toDate(),
+        categoria: { id: "", nombre: "", icono: "" },
       });
       setEditModalOpen(false);
     }
     if (finanzas?.gastosFijos) {
-      setTotal(sumaGastoFijoTotal(Object.values(finanzas.gastosFijos)));
+      setTotal(
+        sumaGastoFijoTotal(Object.values(finanzas.gastosFijos) as GastoFijo[])
+      );
     }
   };
   //#endregion
 
   //#region Agregar Gasto Fijo
   const handleAddGastoFijo = async () => {
-    if (!user || !nuevoGasto.descripcion || !nuevoGasto.monto) return;
+    if (
+      !user ||
+      !nuevoGasto.descripcion ||
+      !nuevoGasto.monto ||
+      !nuevoGasto.categoria
+    )
+      return;
 
-    const success = await addExpense(user.uid, periodo, nuevoGasto);
+    const fechaVencimiento =
+      nuevoGasto.fechaVencimiento instanceof Date
+        ? nuevoGasto.fechaVencimiento
+        : nuevoGasto.fechaVencimiento &&
+          "seconds" in nuevoGasto.fechaVencimiento
+        ? new Date(nuevoGasto.fechaVencimiento.seconds * 1000)
+        : nuevoGasto.fechaVencimiento;
+
+    const success = await addExpense(user.uid, periodo, {
+      ...nuevoGasto,
+      fechaVencimiento,
+    });
+
     if (success) {
       setFinanzas((prev) => {
         if (!prev) return prev;
@@ -165,23 +198,18 @@ export default function GastosFijosPage() {
           gastosFijos: {
             ...prev.gastosFijos,
             [nuevoGasto.descripcion]: {
-              id: nuevoGasto.id,
-              fecha: nuevoGasto.fecha,
               categoria: nuevoGasto.categoria,
               monto: parseFloat(nuevoGasto.monto.toString()),
               descripcion: nuevoGasto.descripcion,
               pagado: nuevoGasto.pagado,
-              fechaVencimiento: nuevoGasto.fechaVencimiento
-                ? nuevoGasto.fechaVencimiento
-                : undefined,
+
+              fechaVencimiento,
             },
           },
         };
       });
 
       setNuevoGasto({
-        id: 0,
-        fecha: "",
         categoria: { id: "", nombre: "", icono: "" },
         monto: 0,
         descripcion: "",
@@ -237,36 +265,25 @@ export default function GastosFijosPage() {
           {finanzas?.gastosFijos ? (
             Object.entries(finanzas.gastosFijos)
               .sort(([_, gastoA], [__, gastoB]) => {
-                // 1) Convertir fecha de A a Date (o null si no hay fecha).
                 const fechaA = gastoA.fechaVencimiento
                   ? gastoA.fechaVencimiento instanceof Date
                     ? gastoA.fechaVencimiento
                     : (gastoA.fechaVencimiento as Timestamp).toDate()
                   : null;
 
-                // 2) Convertir fecha de B a Date (o null si no hay fecha).
                 const fechaB = gastoB.fechaVencimiento
                   ? gastoB.fechaVencimiento instanceof Date
                     ? gastoB.fechaVencimiento
                     : (gastoB.fechaVencimiento as Timestamp).toDate()
                   : null;
 
-                // 3) Comparación
                 if (fechaA && fechaB) {
-                  // Ambos tienen fecha: ordenar por fecha (ascendente)
                   return fechaA.getTime() - fechaB.getTime();
                 } else if (fechaA && !fechaB) {
-                  // A tiene fecha y B no
-                  //   => si quieres que "sin fecha" quede AL FINAL, retorna -1 aquí.
-                  //      si quieres que quede al PRINCIPIO, retorna 1.
                   return -1;
                 } else if (!fechaA && fechaB) {
-                  // B tiene fecha y A no
-                  //   => si quieres que "sin fecha" quede AL FINAL, retorna 1 aquí.
-                  //      si quieres que quede al PRINCIPIO, retorna -1.
                   return 1;
                 } else {
-                  // Ninguno tiene fecha
                   return 0;
                 }
               })
@@ -280,36 +297,51 @@ export default function GastosFijosPage() {
                     <p className="text-sm text-gray-500">
                       Monto: {formatCurrency(gasto.monto)}
                     </p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {gasto.categoria?.nombre}
+                    </p>
                     {gasto.fechaVencimiento && (
                       <p className="text-sm text-gray-500">
                         {(gasto.fechaVencimiento instanceof Date
                           ? gasto.fechaVencimiento // ya es Date
                           : (gasto.fechaVencimiento as Timestamp).toDate()
-                        ) // si es Timestamp, conviértelo
-                          .toLocaleDateString()}
+                        ).toLocaleDateString()}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col items-end space-x-2">
                     <Switch
                       checked={gasto.pagado}
                       onChange={() =>
                         handleTogglePayment(nombre, !gasto.pagado)
                       }
                       color="success"
+                      className="mb-6"
                     />
-                    <button
-                      onClick={() => handleOpenEditModal(nombre, gasto)}
-                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                    >
-                      <Edit className="w-5 h-5 text-gray-700 m-1 " />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteGastoFijo(nombre)}
-                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                    >
-                      <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
-                    </button>
+                    <div className="w-full flex justify-center items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleOpenEditModal(nombre, {
+                            ...gasto,
+                            descripcion: nombre,
+                            categoria: gasto.categoria || {
+                              id: "",
+                              nombre: "",
+                              icono: "",
+                            },
+                          })
+                        }
+                        className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                      >
+                        <Edit className="w-5 h-5 text-gray-700 m-1 " />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGastoFijo(nombre)}
+                        className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                      >
+                        <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -362,13 +394,48 @@ export default function GastosFijosPage() {
             }}
             sx={{ marginBottom: "1rem" }}
           />
+          <TextField
+            select
+            label="Categoría"
+            fullWidth
+            value={nuevoGasto.categoria?.id || ""}
+            onChange={(e) => {
+              const selectedCategoria = categoriasDB.find(
+                (cat) => cat.id === e.target.value
+              );
+              if (selectedCategoria) {
+                setNuevoGasto((prev) => ({
+                  ...prev,
+                  categoria: selectedCategoria,
+                }));
+              }
+            }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
+          >
+            {categoriasDB.length > 0 ? (
+              categoriasDB.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.nombre}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Cargando categorías...</MenuItem>
+            )}
+          </TextField>
 
           <DateWrapper>
             <DatePicker
               label="Fecha de Vencimiento"
+              format="DD/MM/YYYY"
               value={
                 nuevoGasto.fechaVencimiento
-                  ? dayjs(nuevoGasto.fechaVencimiento)
+                  ? dayjs(
+                      nuevoGasto.fechaVencimiento instanceof Date
+                        ? nuevoGasto.fechaVencimiento
+                        : "seconds" in nuevoGasto.fechaVencimiento
+                        ? new Date(nuevoGasto.fechaVencimiento.seconds * 1000)
+                        : nuevoGasto.fechaVencimiento
+                    )
                   : null
               }
               onChange={(newValue) => {
@@ -445,14 +512,55 @@ export default function GastosFijosPage() {
             }}
             sx={{ marginTop: "1rem" }}
           />
+          <TextField
+            select
+            label="Categoría"
+            fullWidth
+            value={gastoEditando?.categoria?.id || ""}
+            onChange={(e) => {
+              const selectedCategoria = categoriasDB.find(
+                (cat) => cat.id === e.target.value
+              );
+              if (selectedCategoria) {
+                setGastoEditando((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        categoria: selectedCategoria,
+                      }
+                    : null
+                );
+              }
+            }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
+          >
+            {categoriasDB.length > 0 ? (
+              categoriasDB.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.nombre}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Cargando categorías...</MenuItem>
+            )}
+          </TextField>
 
           <DateWrapper>
             {gastoEditando && (
               <DatePicker
+                format="DD/MM/YYYY"
                 label="Fecha de Vencimiento"
                 value={
-                  gastoEditando.fechaVencimiento
-                    ? dayjs(gastoEditando.fechaVencimiento)
+                  gastoEditando?.fechaVencimiento
+                    ? dayjs(
+                        gastoEditando.fechaVencimiento instanceof Timestamp
+                          ? gastoEditando.fechaVencimiento.toDate() // Si es Timestamp, conviértelo a Date
+                          : "seconds" in gastoEditando.fechaVencimiento // Si es un objeto con seconds/nanoseconds
+                          ? new Date(
+                              gastoEditando.fechaVencimiento.seconds * 1000
+                            )
+                          : gastoEditando.fechaVencimiento // Si ya es Date, úsalo directamente
+                      )
                     : null
                 }
                 onChange={(newValue) => {
