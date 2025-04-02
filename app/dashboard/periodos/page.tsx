@@ -174,9 +174,9 @@ export default function PeriodosAdminPage() {
       )}
 
       {!loading && periods.length > 0 && (
-        <div className="bg-white rounded-3xl p-3">
-          <table className="w-full text-left border-collapse ">
-            <thead className="bg-gray-100 border-b rounded-3xl">
+        <div className="overflow-x-auto rounded-2xl shadow-md">
+          <table className="w-full border-collapse bg-white text-left text-sm text-gray-700">
+            <thead className="bg-gray-200">
               <tr>
                 <th className="px-2 py-2">Período (ID)</th>
                 <th className="px-2 py-2">Ingresos</th>
@@ -188,8 +188,11 @@ export default function PeriodosAdminPage() {
             </thead>
             <tbody>
               {periods.map((p) => (
-                <tr key={p.id} className="border-b">
-                  <td className="px-2 py-2">{p.id}</td>
+                <tr
+                  key={p.id}
+                  className="border-b hover:bg-gray-100 transition-all"
+                >
+                  <td className="px-6 py-3">{p.id}</td>
                   <td className="px-2 py-2">
                     {formatCurrency(p.data.ingresos) || 0}
                   </td>
@@ -204,7 +207,7 @@ export default function PeriodosAdminPage() {
                       ? dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")
                       : ""}
                   </td>
-                  <td className="px-2 py-2">
+                  <td className="px-6 py-3 flex space-x-2">
                     <button
                       onClick={() => handleOpenEdit(p)}
                       className="rounded-full border-none mr-1 bg-gray-300 hover:bg-gray-400 transition-all"

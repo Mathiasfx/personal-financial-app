@@ -15,15 +15,17 @@ import {
   addExpense,
   updateExpense,
   deleteFixedExpense,
+  getCategories,
 } from "@/lib/finanzasService";
 import { Timestamp } from "firebase/firestore";
-import { Gasto, GastoFijo } from "@/models/gasto.model";
-import { Switch } from "@mui/material";
+import { GastoFijo } from "@/models/gasto.model";
+import { MenuItem, Switch } from "@mui/material";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { formatCurrency, sumaGastoFijoTotal } from "@/lib/utils";
 import { Finanzas } from "@/models/finanzas.model";
+import { Categorias } from "@/models/categorias.model";
 
 export default function GastosFijosPage() {
   const { user } = useAuth();
@@ -40,6 +42,19 @@ export default function GastosFijosPage() {
     pagado: false,
     fechaVencimiento: dayjs().toDate(),
   });
+  const [categoriasDB, setCategoriasDB] = useState<Categorias[]>([]);
+
+  //#region Carga de Categorias
+  useEffect(() => {
+    if (user) {
+      const fetchCategorias = async () => {
+        const categorias = await getCategories(user.uid);
+        setCategoriasDB(categorias);
+      };
+      fetchCategorias();
+    }
+  }, [user]);
+  //#endregion
 
   //#region Fetch Finanzas Periodo Actual
   useEffect(() => {
@@ -106,7 +121,16 @@ export default function GastosFijosPage() {
   };
 
   const handleEditGasto = async () => {
-    if (!user || !finanzas || !gastoEditando) return;
+    if (!user || !finanzas || !gastoEditando || !gastoEditando.categoria)
+      return;
+
+    const fechaVencimiento =
+      gastoEditando.fechaVencimiento instanceof Date
+        ? gastoEditando.fechaVencimiento
+        : gastoEditando.fechaVencimiento &&
+          "seconds" in gastoEditando.fechaVencimiento
+        ? new Date(gastoEditando.fechaVencimiento.seconds * 1000)
+        : gastoEditando.fechaVencimiento;
 
     const success = await updateExpense(user.uid, periodo, gastoEditando);
 
@@ -120,10 +144,8 @@ export default function GastosFijosPage() {
             [gastoEditando.descripcion]: {
               ...prev.gastosFijos[gastoEditando.descripcion],
               monto: gastoEditando.monto,
-              fechaVencimiento:
-                gastoEditando.fechaVencimiento instanceof Timestamp
-                  ? gastoEditando.fechaVencimiento.toDate()
-                  : gastoEditando.fechaVencimiento,
+              fechaVencimiento,
+              categoria: gastoEditando.categoria,
             },
           },
         };
@@ -133,6 +155,7 @@ export default function GastosFijosPage() {
         descripcion: "",
         pagado: false,
         fechaVencimiento: dayjs().toDate(),
+        categoria: { id: "", nombre: "", icono: "" },
       });
       setEditModalOpen(false);
     }
@@ -146,9 +169,27 @@ export default function GastosFijosPage() {
 
   //#region Agregar Gasto Fijo
   const handleAddGastoFijo = async () => {
-    if (!user || !nuevoGasto.descripcion || !nuevoGasto.monto) return;
+    if (
+      !user ||
+      !nuevoGasto.descripcion ||
+      !nuevoGasto.monto ||
+      !nuevoGasto.categoria
+    )
+      return;
 
-    const success = await addExpense(user.uid, periodo, nuevoGasto);
+    const fechaVencimiento =
+      nuevoGasto.fechaVencimiento instanceof Date
+        ? nuevoGasto.fechaVencimiento
+        : nuevoGasto.fechaVencimiento &&
+          "seconds" in nuevoGasto.fechaVencimiento
+        ? new Date(nuevoGasto.fechaVencimiento.seconds * 1000)
+        : nuevoGasto.fechaVencimiento;
+
+    const success = await addExpense(user.uid, periodo, {
+      ...nuevoGasto,
+      fechaVencimiento,
+    });
+
     if (success) {
       setFinanzas((prev) => {
         if (!prev) return prev;
@@ -161,9 +202,8 @@ export default function GastosFijosPage() {
               monto: parseFloat(nuevoGasto.monto.toString()),
               descripcion: nuevoGasto.descripcion,
               pagado: nuevoGasto.pagado,
-              fechaVencimiento: nuevoGasto.fechaVencimiento
-                ? nuevoGasto.fechaVencimiento
-                : undefined,
+
+              fechaVencimiento,
             },
           },
         };
@@ -257,6 +297,9 @@ export default function GastosFijosPage() {
                     <p className="text-sm text-gray-500">
                       Monto: {formatCurrency(gasto.monto)}
                     </p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {gasto.categoria?.nombre}
+                    </p>
                     {gasto.fechaVencimiento && (
                       <p className="text-sm text-gray-500">
                         {(gasto.fechaVencimiento instanceof Date
@@ -266,36 +309,39 @@ export default function GastosFijosPage() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col items-end space-x-2">
                     <Switch
                       checked={gasto.pagado}
                       onChange={() =>
                         handleTogglePayment(nombre, !gasto.pagado)
                       }
                       color="success"
+                      className="mb-6"
                     />
-                    <button
-                      onClick={() =>
-                        handleOpenEditModal(nombre, {
-                          ...gasto,
-                          descripcion: nombre,
-                          categoria: gasto.categoria || {
-                            id: "",
-                            nombre: "",
-                            icono: "",
-                          },
-                        })
-                      }
-                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                    >
-                      <Edit className="w-5 h-5 text-gray-700 m-1 " />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteGastoFijo(nombre)}
-                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                    >
-                      <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
-                    </button>
+                    <div className="w-full flex justify-center items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleOpenEditModal(nombre, {
+                            ...gasto,
+                            descripcion: nombre,
+                            categoria: gasto.categoria || {
+                              id: "",
+                              nombre: "",
+                              icono: "",
+                            },
+                          })
+                        }
+                        className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                      >
+                        <Edit className="w-5 h-5 text-gray-700 m-1 " />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGastoFijo(nombre)}
+                        className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                      >
+                        <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -348,6 +394,34 @@ export default function GastosFijosPage() {
             }}
             sx={{ marginBottom: "1rem" }}
           />
+          <TextField
+            select
+            label="Categoría"
+            fullWidth
+            value={nuevoGasto.categoria?.id || ""}
+            onChange={(e) => {
+              const selectedCategoria = categoriasDB.find(
+                (cat) => cat.id === e.target.value
+              );
+              if (selectedCategoria) {
+                setNuevoGasto((prev) => ({
+                  ...prev,
+                  categoria: selectedCategoria,
+                }));
+              }
+            }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
+          >
+            {categoriasDB.length > 0 ? (
+              categoriasDB.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.nombre}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Cargando categorías...</MenuItem>
+            )}
+          </TextField>
 
           <DateWrapper>
             <DatePicker
@@ -355,7 +429,13 @@ export default function GastosFijosPage() {
               format="DD/MM/YYYY"
               value={
                 nuevoGasto.fechaVencimiento
-                  ? dayjs(nuevoGasto.fechaVencimiento)
+                  ? dayjs(
+                      nuevoGasto.fechaVencimiento instanceof Date
+                        ? nuevoGasto.fechaVencimiento
+                        : "seconds" in nuevoGasto.fechaVencimiento
+                        ? new Date(nuevoGasto.fechaVencimiento.seconds * 1000)
+                        : nuevoGasto.fechaVencimiento
+                    )
                   : null
               }
               onChange={(newValue) => {
@@ -432,6 +512,38 @@ export default function GastosFijosPage() {
             }}
             sx={{ marginTop: "1rem" }}
           />
+          <TextField
+            select
+            label="Categoría"
+            fullWidth
+            value={gastoEditando?.categoria?.id || ""}
+            onChange={(e) => {
+              const selectedCategoria = categoriasDB.find(
+                (cat) => cat.id === e.target.value
+              );
+              if (selectedCategoria) {
+                setGastoEditando((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        categoria: selectedCategoria,
+                      }
+                    : null
+                );
+              }
+            }}
+            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
+          >
+            {categoriasDB.length > 0 ? (
+              categoriasDB.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.nombre}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>Cargando categorías...</MenuItem>
+            )}
+          </TextField>
 
           <DateWrapper>
             {gastoEditando && (
@@ -439,10 +551,16 @@ export default function GastosFijosPage() {
                 format="DD/MM/YYYY"
                 label="Fecha de Vencimiento"
                 value={
-                  gastoEditando.fechaVencimiento
-                    ? gastoEditando.fechaVencimiento instanceof Timestamp
-                      ? dayjs(gastoEditando.fechaVencimiento.toDate())
-                      : dayjs(gastoEditando.fechaVencimiento)
+                  gastoEditando?.fechaVencimiento
+                    ? dayjs(
+                        gastoEditando.fechaVencimiento instanceof Timestamp
+                          ? gastoEditando.fechaVencimiento.toDate() // Si es Timestamp, conviértelo a Date
+                          : "seconds" in gastoEditando.fechaVencimiento // Si es un objeto con seconds/nanoseconds
+                          ? new Date(
+                              gastoEditando.fechaVencimiento.seconds * 1000
+                            )
+                          : gastoEditando.fechaVencimiento // Si ya es Date, úsalo directamente
+                      )
                     : null
                 }
                 onChange={(newValue) => {
