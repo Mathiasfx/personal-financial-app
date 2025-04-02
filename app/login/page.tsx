@@ -140,7 +140,7 @@ export default function LoginPage() {
             </Link>
           </p>
           <div className="flex justify-center md:justify-end">
-            <p className="text-xs">Version: 1.0.1</p>
+            <p className="text-xs">Version: 1.0.2</p>
           </div>
         </div>
         {/* Sección Derecha - Imagen */}
