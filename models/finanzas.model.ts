@@ -11,7 +11,7 @@ import { Gasto } from "./gasto.model";
         categoria?: { id: string; nombre: string; icono: string; };      
         monto: number;
         pagado: boolean;
-        fechaVencimiento?:Date;
+        fechaVencimiento?: Date | { seconds: number; nanoseconds: number } | Timestamp;
       };
     };
     gastosVariables: Gasto[];
