@@ -1,5 +1,16 @@
 "use client";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+//#redux
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchFinanzasPorPeriodo,
+  selectFinanzas,
+  selectFinanzasLoading,
+  selectPeriodo,
+  setPeriodo,
+} from "../redux/slices/finanzas";
+import { AppDispatch } from "@/app/redux/store";
+//#redux
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -7,16 +18,10 @@ import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import dayjs from "dayjs";
 import { useAuth } from "@/context/AuthContext";
-import {
-  createPeriodIfNotExists,
-  editExpense,
-  getFinancialData,
-  listAllPeriods,
-} from "@/lib/finanzasService";
-import { Finanzas } from "@/models/finanzas.model";
+import { editExpense, listAllPeriods } from "@/lib/finanzasService";
+
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Gasto } from "@/models/gasto.model";
-//import { getLatestFinancialPeriod } from "@/lib/finanzasService";
 import { formatCurrency } from "@/lib/utils";
 import { Edit, DeleteRounded } from "@mui/icons-material";
 import { deleteExpense } from "@/lib/finanzasService";
@@ -25,11 +30,11 @@ import AgregarGastos from "./components/AgregarGastos";
 
 export default function Dashboard() {
   const { user } = useAuth();
-
-  const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const finanzas = useSelector(selectFinanzas);
+  const loading = useSelector(selectFinanzasLoading);
+  const periodo = useSelector(selectPeriodo) as string;
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
-  const [periodo, setPeriodo] = useState(dayjs().format("YYYY-MM"));
-  const [loading, setLoading] = useState<boolean>(true);
   const [numGastos, setNumGastos] = useState(10);
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -39,11 +44,10 @@ export default function Dashboard() {
   const lastGastoRef = useCallback(
     (node: HTMLDivElement) => {
       if (loading) return;
-
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
-          setNumGastos((prev) => prev + 5); // Carga 5 más cada vez
+          setNumGastos((prev) => prev + 5);
         }
       });
       if (node) observer.current.observe(node);
@@ -57,127 +61,74 @@ export default function Dashboard() {
     setEditModalOpen(true);
   };
 
-  //#region Calcular total de gastos fijos pagados
   const totalGastosFijos = useMemo(() => {
     return Object.values(finanzas?.gastosFijos || {}).reduce(
       (sum, gasto) => sum + (gasto.pagado ? gasto.monto : 0),
       0
     );
   }, [finanzas]);
-  //#endregion
 
-  //#region Calcular total de gastos variables
   const totalGastosVariables = useMemo(() => {
     return (finanzas?.gastosVariables || []).reduce(
       (sum, gasto) => sum + gasto.monto,
       0
     );
   }, [finanzas]);
-  //#endregion
 
-  //#region Disponible
   const dineroDisponible = useMemo(() => {
     return (
       (finanzas?.ingresos || 0) +
       (finanzas?.ingresosExtras || 0) -
-      (totalGastosFijos +
-        totalGastosVariables +
-        (finanzas?.inversiones ? finanzas.inversiones : 0))
+      (totalGastosFijos + totalGastosVariables + (finanzas?.inversiones || 0))
     );
   }, [finanzas, totalGastosFijos, totalGastosVariables]);
-  //#endregion
 
-  //#region Dias restantes Cobro
   const diasCobro = useMemo(() => {
     if (!finanzas?.fechaCobro) return 0;
-    return dayjs(finanzas.fechaCobro.toDate()).diff(dayjs(), "day");
+    return dayjs(finanzas.fechaCobro as Date).diff(dayjs(), "day");
   }, [finanzas]);
-  //#endregion
 
-  //#region Obtener Datos Finanzas
   useEffect(() => {
-    if (!user) return;
+    const fetchPeriodos = async () => {
+      if (!user) return;
+      const allPeriods = await listAllPeriods(user.uid);
+      const ids = allPeriods.map((p) => p.id);
+      const current = dayjs().format("YYYY-MM");
+      if (!ids.includes(current)) ids.push(current);
+      ids.sort();
+      setPeriodosDisponibles(ids);
+      dispatch(setPeriodo(current));
+    };
+    fetchPeriodos();
+  }, [user, dispatch]);
 
-    (async () => {
-      try {
-        const allPeriods = await listAllPeriods(user.uid);
-        // listAllPeriods -> te retorna un array de { id, data }
-
-        // Extraemos sólo los IDs
-        const ids = allPeriods.map((p) => p.id);
-
-        // Ordenamos los IDs (opcional)
-        ids.sort();
-
-        // Si prefieres que siempre aparezca el mes actual en el select
-        // aunque no exista todavía en la base:
-        const current = dayjs().format("YYYY-MM");
-        if (!ids.includes(current)) {
-          ids.push(current);
-          ids.sort();
-        }
-
-        setPeriodosDisponibles(ids);
-      } catch (error) {
-        console.error("Error listando periodos:", error);
-      }
-    })();
-  }, [user]);
-
-  const fetchCurrentPeriodData = useCallback(async () => {
-    if (!user || !periodo) return;
-    setLoading(true);
-    try {
-      await createPeriodIfNotExists(user.uid, periodo); // Crea si no existe
-      const data = await getFinancialData(user.uid, periodo); // Lee
-      setFinanzas(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (user && periodo) {
+      dispatch(fetchFinanzasPorPeriodo({ uid: user.uid, periodo }));
     }
-  }, [user, periodo]);
+  }, [user, periodo, dispatch]);
 
-  useEffect(() => {
-    fetchCurrentPeriodData();
-  }, [fetchCurrentPeriodData]);
-  //#endregion
-
-  //#region Gastos Funciones
-  //actualiza la info cuando se agrega un gasto y cierra modal
   const handleGastoAgregado = async () => {
     setModalOpen(false);
-    setLoading(true);
-    await fetchCurrentPeriodData();
-    setLoading(false);
+    if (user) {
+      await dispatch(fetchFinanzasPorPeriodo({ uid: user.uid, periodo }));
+    }
   };
 
   const handleDeleteExpense = async (gastoId: number) => {
     if (!user || !finanzas || gastoId === undefined) return;
-
     const confirmDelete = window.confirm(
       "¿Seguro que quieres eliminar este gasto?"
     );
     if (!confirmDelete) return;
-
     const success = await deleteExpense(user.uid, periodo, gastoId);
     if (success) {
-      setFinanzas((prev) =>
-        prev
-          ? {
-              ...prev,
-              gastosVariables: prev.gastosVariables.filter(
-                (g) => g.id !== gastoId
-              ),
-            }
-          : prev
-      );
+      await dispatch(fetchFinanzasPorPeriodo({ uid: user.uid, periodo }));
     }
   };
 
   const handleEditGasto = async (updatedData: Gasto) => {
     if (!user || !finanzas || !gastoEditando) return;
-
     const success = await editExpense(
       user.uid,
       periodo,
@@ -185,20 +136,10 @@ export default function Dashboard() {
       updatedData
     );
     if (success) {
-      setFinanzas((prev) =>
-        prev
-          ? {
-              ...prev,
-              gastosVariables: prev.gastosVariables.map((g) =>
-                g.id === gastoEditando.id ? { ...g, ...updatedData } : g
-              ),
-            }
-          : prev
-      );
+      await dispatch(fetchFinanzasPorPeriodo({ uid: user.uid, periodo }));
       setEditModalOpen(false);
     }
   };
-  //#endregion
 
   return (
     <div className="p-0 md:p-4">
@@ -224,7 +165,7 @@ export default function Dashboard() {
               </h6>
               <select
                 value={periodo}
-                onChange={(e) => setPeriodo(e.target.value)}
+                onChange={(e) => dispatch(setPeriodo(e.target.value))}
                 className="border rounded-md p-2 ml-2 text-sm font-semibold w-32 "
               >
                 {periodosDisponibles.map((p) => (
@@ -265,7 +206,7 @@ export default function Dashboard() {
             {loading ? (
               <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
             ) : finanzas?.fechaCobro ? (
-              dayjs(finanzas.fechaCobro.toDate()).format("DD/MM/YYYY")
+              dayjs(finanzas.fechaCobro as Date).format("DD/MM/YYYY")
             ) : (
               "-"
             )}
@@ -325,7 +266,7 @@ export default function Dashboard() {
             </div>
           ) : finanzas?.gastosVariables?.length && user ? (
             <div className="space-y-4">
-              {finanzas?.gastosVariables
+              {[...(finanzas?.gastosVariables || [])]
                 .sort((a, b) => dayjs(b.fecha).diff(dayjs(a.fecha)))
                 .slice(0, numGastos)
                 .map((gasto, index) => (

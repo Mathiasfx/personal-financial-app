@@ -92,9 +92,7 @@ export default function PeriodosAdminPage() {
       ingresos: period.data.ingresos || 0,
       ingresosExtras: period.data.ingresosExtras || 0,
       inversiones: period.data.inversiones || 0,
-      fechaCobro: period.data.fechaCobro
-        ? dayjs(period.data.fechaCobro.toDate())
-        : null,
+      fechaCobro: period.data.fechaCobro ? dayjs(period.data.fechaCobro) : null,
     });
     setModalOpen(true);
   }
@@ -204,7 +202,7 @@ export default function PeriodosAdminPage() {
                   </td>
                   <td className="px-2 py-2">
                     {p.data.fechaCobro
-                      ? dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")
+                      ? dayjs(p.data.fechaCobro).format("DD/MM/YYYY")
                       : ""}
                   </td>
                   <td className="px-6 py-3 flex space-x-2">
