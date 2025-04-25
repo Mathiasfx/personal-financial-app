@@ -2,20 +2,12 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import {
-  getCategories,
-  addCategory,
-  updateCategory,
-  deleteCategory,
-} from "@/lib/finanzasService";
+
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-
 import { SelectChangeEvent } from "@mui/material/Select";
-
 import { Edit, Delete, Save } from "@mui/icons-material";
 import {
   ShoppingCart,
@@ -31,6 +23,16 @@ import {
   Work,
   School,
 } from "@mui/icons-material";
+import { AppDispatch } from "@/app/redux/store";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  crearCategoria,
+  editarCategoria,
+  eliminarCategoria,
+  fetchCategorias,
+  selectCategorias,
+  // selectCategoriasLoading,
+} from "@/app/redux/slices/categorias";
 
 export default function CategoriasPage() {
   const iconMap: { [key: string]: JSX.Element } = useMemo(
@@ -54,7 +56,9 @@ export default function CategoriasPage() {
   const iconOptions = useMemo(() => Object.keys(iconMap), [iconMap]);
 
   const { user } = useAuth();
-  const [categorias, setCategorias] = useState<any[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const categorias = useSelector(selectCategorias);
+  //const categoriasLoading = useSelector(selectCategoriasLoading);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
   const [nuevoIcono, setNuevoIcono] = useState("ShoppingCart");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,12 +68,10 @@ export default function CategoriasPage() {
   const rowsPerPage = 10;
 
   useEffect(() => {
-    if (user) {
-      getCategories(user.uid).then((data) => {
-        setCategorias(data || []);
-      });
+    if (user?.uid) {
+      dispatch(fetchCategorias(user.uid));
     }
-  }, [user]);
+  }, [user, dispatch]);
 
   const paginatedCategories = useMemo(
     () =>
@@ -78,27 +80,29 @@ export default function CategoriasPage() {
   );
 
   //#region Agregar Categoría
-  const handleAddCategory = useCallback(async () => {
+  const handleAddCategory = async () => {
     if (user && nuevaCategoria.trim()) {
-      const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
-      const addedCategory = await addCategory(user.uid, newCategory);
-      setCategorias((prev) => [...prev, addedCategory]);
+      await dispatch(
+        crearCategoria({
+          uid: user.uid,
+          categoria: {
+            nombre: nuevaCategoria,
+            icono: nuevoIcono,
+          },
+        })
+      );
       setNuevaCategoria("");
       setNuevoIcono("ShoppingCart");
     }
-  }, [user, nuevaCategoria, nuevoIcono]);
+  };
   //#endregion
 
   //#region Eliminar Categoría
-  const handleDeleteCategory = useCallback(
-    async (categoryId: string) => {
-      if (user) {
-        await deleteCategory(user.uid, categoryId);
-        setCategorias((prev) => prev.filter((cat) => cat.id !== categoryId));
-      }
-    },
-    [user]
-  );
+  const handleDeleteCategory = async (id: string) => {
+    if (user) {
+      await dispatch(eliminarCategoria({ uid: user.uid, id }));
+    }
+  };
   //#endregion
 
   //#region Editar Categoría
@@ -114,18 +118,17 @@ export default function CategoriasPage() {
   //#endregion
 
   //#region Guardar Editar Categoría
-  const handleSaveEdit = async (categoryId: string) => {
+  const handleSaveEdit = async (id: string) => {
     if (user && editValue.trim()) {
-      await updateCategory(user.uid, categoryId, {
-        nombre: editValue,
-        icono: editIcon,
-      });
-      setCategorias(
-        categorias.map((cat) =>
-          cat.id === categoryId
-            ? { ...cat, nombre: editValue, icono: editIcon }
-            : cat
-        )
+      await dispatch(
+        editarCategoria({
+          uid: user.uid,
+          categoria: {
+            id,
+            nombre: editValue,
+            icono: editIcon,
+          },
+        })
       );
       setEditingId(null);
       setEditValue("");
