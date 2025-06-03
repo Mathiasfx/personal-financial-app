@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -13,6 +14,7 @@ import { updateProfile } from "firebase/auth";
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const toast = useToast();
   const router = useRouter();
   const [form, setForm] = useState({
     nombre: "",
@@ -25,13 +27,29 @@ export default function RegisterPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    // Validaciones
+    if (
+      !form.nombre ||
+      !form.email ||
+      !form.password ||
+      !form.confirmPassword
+    ) {
+      toast.showWarning("Por favor completa todos los campos");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      toast.showWarning("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       setError("Las contraseñas no coinciden.");
+      toast.showError("Las contraseñas no coinciden");
       return;
     }
 
@@ -41,9 +59,11 @@ export default function RegisterPage() {
       await updateProfile(user, {
         displayName: form.nombre,
       });
+      toast.showSuccess("¡Registro exitoso! Bienvenido a la aplicación");
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
+      toast.showError("Error al registrar: " + err.message);
     }
   };
 

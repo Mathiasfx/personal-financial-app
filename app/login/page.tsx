@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 import imagepreview from "../../public/images/dashboard_preview.png";
@@ -16,6 +17,7 @@ import Link from "next/link";
 
 export default function LoginPage() {
   const { login, loginWithGoogle, user } = useAuth();
+  const toast = useToast();
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -30,17 +32,24 @@ export default function LoginPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     setLoading(true);
     e.preventDefault();
     setError("");
 
+    if (!form.email || !form.password) {
+      toast.showWarning("Por favor completa todos los campos");
+      setLoading(false);
+      return;
+    }
+
     try {
       await login(form.email, form.password);
+      toast.showSuccess("¡Bienvenido! Inicio de sesión exitoso");
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
+      toast.showError("Error al iniciar sesión: " + err.message);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -52,9 +61,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithGoogle();
+      toast.showSuccess("¡Bienvenido! Inicio de sesión con Google exitoso");
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      toast.showError("Error al iniciar sesión con Google");
     } finally {
       setLoading(false);
     }

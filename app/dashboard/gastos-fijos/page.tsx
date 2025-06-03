@@ -8,6 +8,7 @@ import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import { Add, DeleteRounded, Edit } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 import {
   getFinancialData,
   getLatestFinancialPeriod,
@@ -29,6 +30,7 @@ import { Categorias } from "@/models/categorias.model";
 
 export default function GastosFijosPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [total, setTotal] = useState(0);
   const [periodo, setPeriodo] = useState("");
@@ -43,37 +45,48 @@ export default function GastosFijosPage() {
     fechaVencimiento: dayjs().toDate(),
   });
   const [categoriasDB, setCategoriasDB] = useState<Categorias[]>([]);
-
   //#region Carga de Categorias
   useEffect(() => {
     if (user) {
       const fetchCategorias = async () => {
-        const categorias = await getCategories(user.uid);
-        setCategoriasDB(categorias);
+        try {
+          const categorias = await getCategories(user.uid);
+          setCategoriasDB(categorias);
+        } catch (error) {
+          console.error("Error loading categories:", error);
+          toast.showError("Error al cargar las categorías");
+        }
       };
       fetchCategorias();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // toast intencionalmente omitido para evitar bucles infinitos
   //#endregion
 
   //#region Fetch Finanzas Periodo Actual
   useEffect(() => {
     if (!user) return;
     const fetchFinanzas = async () => {
-      const periodoActual = await getLatestFinancialPeriod(user.uid);
-      setPeriodo(periodoActual);
+      try {
+        const periodoActual = await getLatestFinancialPeriod(user.uid);
+        setPeriodo(periodoActual);
 
-      const data = (await getFinancialData(
-        user.uid,
-        periodoActual
-      )) as Finanzas;
-      if (data !== null) {
-        setFinanzas(data);
+        const data = (await getFinancialData(
+          user.uid,
+          periodoActual
+        )) as Finanzas;
+        if (data !== null) {
+          setFinanzas(data);
+          // Removida notificación redundante de carga exitosa
+        }
+      } catch (error) {
+        console.error("Error loading financial data:", error);
+        toast.showError("Error al cargar los datos financieros");
       }
     };
-
     fetchFinanzas();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // toast intencionalmente omitido para evitar bucles infinitos
   //#endregion
 
   //#region Set Total de Gastos Fijos
@@ -85,29 +98,38 @@ export default function GastosFijosPage() {
     }
   }, [finanzas?.gastosFijos]);
   //#endregion
-
   //#region Manejar estado del gasto
   const handleTogglePayment = async (gastoNombre: string, pagado: boolean) => {
     if (!user || !finanzas) return;
 
-    const success = await updateExpenseStatus(
-      user.uid,
-      periodo,
-      gastoNombre,
-      pagado
-    );
-    if (success) {
-      setFinanzas((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          gastosFijos: {
-            ...prev.gastosFijos,
-            ...prev.gastosFijos,
-            [gastoNombre]: { ...prev.gastosFijos[gastoNombre], pagado },
-          },
-        };
-      });
+    try {
+      const success = await updateExpenseStatus(
+        user.uid,
+        periodo,
+        gastoNombre,
+        pagado
+      );
+      if (success) {
+        setFinanzas((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            gastosFijos: {
+              ...prev.gastosFijos,
+              ...prev.gastosFijos,
+              [gastoNombre]: { ...prev.gastosFijos[gastoNombre], pagado },
+            },
+          };
+        });
+        toast.showSuccess(
+          `Gasto fijo marcado como ${pagado ? "pagado" : "no pagado"}`
+        );
+      } else {
+        toast.showError("Error al actualizar el estado del gasto");
+      }
+    } catch (error) {
+      console.error("Error updating expense status:", error);
+      toast.showError("Error al actualizar el estado del gasto");
     }
   };
   //#endregion
@@ -119,46 +141,55 @@ export default function GastosFijosPage() {
       setEditModalOpen(true);
     }
   };
-
   const handleEditGasto = async () => {
-    if (!user || !finanzas || !gastoEditando || !gastoEditando.categoria)
+    if (!user || !finanzas || !gastoEditando || !gastoEditando.categoria) {
+      toast.showWarning("Por favor completa todos los campos requeridos");
       return;
-
-    const fechaVencimiento =
-      gastoEditando.fechaVencimiento instanceof Date
-        ? gastoEditando.fechaVencimiento
-        : gastoEditando.fechaVencimiento &&
-          "seconds" in gastoEditando.fechaVencimiento
-        ? new Date(gastoEditando.fechaVencimiento.seconds * 1000)
-        : gastoEditando.fechaVencimiento;
-
-    const success = await updateExpense(user.uid, periodo, gastoEditando);
-
-    if (success) {
-      setFinanzas((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          gastosFijos: {
-            ...prev.gastosFijos,
-            [gastoEditando.descripcion]: {
-              ...prev.gastosFijos[gastoEditando.descripcion],
-              monto: gastoEditando.monto,
-              fechaVencimiento,
-              categoria: gastoEditando.categoria,
-            },
-          },
-        };
-      });
-      setGastoEditando({
-        monto: 0,
-        descripcion: "",
-        pagado: false,
-        fechaVencimiento: dayjs().toDate(),
-        categoria: { id: "", nombre: "", icono: "" },
-      });
-      setEditModalOpen(false);
     }
+
+    try {
+      const fechaVencimiento =
+        gastoEditando.fechaVencimiento instanceof Date
+          ? gastoEditando.fechaVencimiento
+          : gastoEditando.fechaVencimiento &&
+            "seconds" in gastoEditando.fechaVencimiento
+          ? new Date(gastoEditando.fechaVencimiento.seconds * 1000)
+          : gastoEditando.fechaVencimiento;
+
+      const success = await updateExpense(user.uid, periodo, gastoEditando);
+      if (success) {
+        setFinanzas((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            gastosFijos: {
+              ...prev.gastosFijos,
+              [gastoEditando.descripcion]: {
+                ...prev.gastosFijos[gastoEditando.descripcion],
+                monto: gastoEditando.monto,
+                fechaVencimiento,
+                categoria: gastoEditando.categoria,
+              },
+            },
+          };
+        });
+        setGastoEditando({
+          monto: 0,
+          descripcion: "",
+          pagado: false,
+          fechaVencimiento: dayjs().toDate(),
+          categoria: { id: "", nombre: "", icono: "" },
+        });
+        setEditModalOpen(false);
+        toast.showSuccess("Gasto fijo actualizado exitosamente");
+      } else {
+        toast.showError("Error al actualizar el gasto fijo");
+      }
+    } catch (error) {
+      console.error("Error updating expense:", error);
+      toast.showError("Error al actualizar el gasto fijo");
+    }
+
     if (finanzas?.gastosFijos) {
       setTotal(
         sumaGastoFijoTotal(Object.values(finanzas.gastosFijos) as GastoFijo[])
@@ -166,7 +197,6 @@ export default function GastosFijosPage() {
     }
   };
   //#endregion
-
   //#region Agregar Gasto Fijo
   const handleAddGastoFijo = async () => {
     if (
@@ -174,68 +204,89 @@ export default function GastosFijosPage() {
       !nuevoGasto.descripcion ||
       !nuevoGasto.monto ||
       !nuevoGasto.categoria
-    )
+    ) {
+      toast.showWarning("Por favor completa todos los campos requeridos");
       return;
+    }
 
-    const fechaVencimiento =
-      nuevoGasto.fechaVencimiento instanceof Date
-        ? nuevoGasto.fechaVencimiento
-        : nuevoGasto.fechaVencimiento &&
-          "seconds" in nuevoGasto.fechaVencimiento
-        ? new Date(nuevoGasto.fechaVencimiento.seconds * 1000)
-        : nuevoGasto.fechaVencimiento;
+    try {
+      const fechaVencimiento =
+        nuevoGasto.fechaVencimiento instanceof Date
+          ? nuevoGasto.fechaVencimiento
+          : nuevoGasto.fechaVencimiento &&
+            "seconds" in nuevoGasto.fechaVencimiento
+          ? new Date(nuevoGasto.fechaVencimiento.seconds * 1000)
+          : nuevoGasto.fechaVencimiento;
 
-    const success = await addExpense(user.uid, periodo, {
-      ...nuevoGasto,
-      fechaVencimiento,
-    });
+      const success = await addExpense(user.uid, periodo, {
+        ...nuevoGasto,
+        fechaVencimiento,
+      });
 
-    if (success) {
-      setFinanzas((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          gastosFijos: {
-            ...prev.gastosFijos,
-            [nuevoGasto.descripcion]: {
-              categoria: nuevoGasto.categoria,
-              monto: parseFloat(nuevoGasto.monto.toString()),
-              descripcion: nuevoGasto.descripcion,
-              pagado: nuevoGasto.pagado,
-
-              fechaVencimiento,
+      if (success) {
+        setFinanzas((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            gastosFijos: {
+              ...prev.gastosFijos,
+              [nuevoGasto.descripcion]: {
+                categoria: nuevoGasto.categoria,
+                monto: parseFloat(nuevoGasto.monto.toString()),
+                descripcion: nuevoGasto.descripcion,
+                pagado: nuevoGasto.pagado,
+                fechaVencimiento,
+              },
             },
-          },
-        };
-      });
+          };
+        });
 
-      setNuevoGasto({
-        categoria: { id: "", nombre: "", icono: "" },
-        monto: 0,
-        descripcion: "",
-        pagado: false,
-        fechaVencimiento: dayjs().toDate(),
-      });
-      setAddModalOpen(false);
+        setNuevoGasto({
+          categoria: { id: "", nombre: "", icono: "" },
+          monto: 0,
+          descripcion: "",
+          pagado: false,
+          fechaVencimiento: dayjs().toDate(),
+        });
+        setAddModalOpen(false);
+        toast.showSuccess("Gasto fijo agregado exitosamente");
+      } else {
+        toast.showError("Error al agregar el gasto fijo");
+      }
+    } catch (error) {
+      console.error("Error adding expense:", error);
+      toast.showError("Error al agregar el gasto fijo");
     }
   };
   //#endregion
-
   //#region Eliminar Gasto Fijo
   const handleDeleteGastoFijo = async (gastoNombre: string) => {
     if (!user || !finanzas) return;
 
-    const success = await deleteFixedExpense(user.uid, periodo, gastoNombre);
-    if (success) {
-      setFinanzas((prev) => {
-        if (!prev) return prev;
-        const updatedGastosFijos = { ...prev.gastosFijos };
-        delete updatedGastosFijos[gastoNombre];
-        return {
-          ...prev,
-          gastosFijos: updatedGastosFijos,
-        };
-      });
+    const confirmDelete = window.confirm(
+      "¿Estás seguro de que quieres eliminar este gasto fijo?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const success = await deleteFixedExpense(user.uid, periodo, gastoNombre);
+      if (success) {
+        setFinanzas((prev) => {
+          if (!prev) return prev;
+          const updatedGastosFijos = { ...prev.gastosFijos };
+          delete updatedGastosFijos[gastoNombre];
+          return {
+            ...prev,
+            gastosFijos: updatedGastosFijos,
+          };
+        });
+        toast.showSuccess("Gasto fijo eliminado exitosamente");
+      } else {
+        toast.showError("Error al eliminar el gasto fijo");
+      }
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.showError("Error al eliminar el gasto fijo");
     }
   };
   //#endregion

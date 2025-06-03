@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/context/AuthContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import ToastContainer from "./components/ToastContainer";
 import localFont from "next/font/local";
 import "./globals.css";
 import { CssBaseline } from "@mui/material";
@@ -43,8 +45,13 @@ export default function RootLayout({
     <html lang="es">
       <body className={lufga.className}>
         <AuthProvider>
-          <CssBaseline />
-          <ThemeProvider theme={lightTheme}>{children}</ThemeProvider>
+          <NotificationProvider>
+            <CssBaseline />
+            <ThemeProvider theme={lightTheme}>
+              {children}
+              <ToastContainer />
+            </ThemeProvider>
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

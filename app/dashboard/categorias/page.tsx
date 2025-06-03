@@ -2,6 +2,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 import {
   getCategories,
   addCategory,
@@ -13,6 +14,7 @@ import Button from "@mui/material/Button";
 
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
 
 import { SelectChangeEvent } from "@mui/material/Select";
 
@@ -54,6 +56,7 @@ export default function CategoriasPage() {
   const iconOptions = useMemo(() => Object.keys(iconMap), [iconMap]);
 
   const { user } = useAuth();
+  const toast = useToast();
   const [categorias, setCategorias] = useState<any[]>([]);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
   const [nuevoIcono, setNuevoIcono] = useState("ShoppingCart");
@@ -62,42 +65,58 @@ export default function CategoriasPage() {
   const [editIcon, setEditIcon] = useState("ShoppingCart");
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
-
   useEffect(() => {
     if (user) {
-      getCategories(user.uid).then((data) => {
-        setCategorias(data || []);
-      });
+      getCategories(user.uid)
+        .then((data) => {
+          setCategorias(data || []);
+        })
+        .catch((error) => {
+          console.error("Error al cargar categorías:", error);
+          toast.crud.loadError("las categorías");
+        });
     }
-  }, [user]);
+  }, [user, toast]);
 
   const paginatedCategories = useMemo(
     () =>
       categorias.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [categorias, page, rowsPerPage]
   );
-
   //#region Agregar Categoría
   const handleAddCategory = useCallback(async () => {
     if (user && nuevaCategoria.trim()) {
-      const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
-      const addedCategory = await addCategory(user.uid, newCategory);
-      setCategorias((prev) => [...prev, addedCategory]);
-      setNuevaCategoria("");
-      setNuevoIcono("ShoppingCart");
+      try {
+        const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
+        const addedCategory = await addCategory(user.uid, newCategory);
+        setCategorias((prev) => [...prev, addedCategory]);
+        setNuevaCategoria("");
+        setNuevoIcono("ShoppingCart");
+        toast.finance.categoryCreated();
+      } catch (error) {
+        console.error("Error al agregar categoría:", error);
+        toast.finance.categoryError();
+      }
+    } else {
+      toast.crud.validation("El nombre de la categoría es requerido");
     }
-  }, [user, nuevaCategoria, nuevoIcono]);
+  }, [user, nuevaCategoria, nuevoIcono, toast]);
   //#endregion
-
   //#region Eliminar Categoría
   const handleDeleteCategory = useCallback(
     async (categoryId: string) => {
       if (user) {
-        await deleteCategory(user.uid, categoryId);
-        setCategorias((prev) => prev.filter((cat) => cat.id !== categoryId));
+        try {
+          await deleteCategory(user.uid, categoryId);
+          setCategorias((prev) => prev.filter((cat) => cat.id !== categoryId));
+          toast.finance.categoryDeleted();
+        } catch (error) {
+          console.error("Error al eliminar categoría:", error);
+          toast.crud.deleteError("la categoría");
+        }
       }
     },
-    [user]
+    [user, toast]
   );
   //#endregion
 
@@ -112,24 +131,31 @@ export default function CategoriasPage() {
     setEditIcon(iconoActual);
   };
   //#endregion
-
   //#region Guardar Editar Categoría
   const handleSaveEdit = async (categoryId: string) => {
     if (user && editValue.trim()) {
-      await updateCategory(user.uid, categoryId, {
-        nombre: editValue,
-        icono: editIcon,
-      });
-      setCategorias(
-        categorias.map((cat) =>
-          cat.id === categoryId
-            ? { ...cat, nombre: editValue, icono: editIcon }
-            : cat
-        )
-      );
-      setEditingId(null);
-      setEditValue("");
-      setEditIcon("ShoppingCart");
+      try {
+        await updateCategory(user.uid, categoryId, {
+          nombre: editValue,
+          icono: editIcon,
+        });
+        setCategorias(
+          categorias.map((cat) =>
+            cat.id === categoryId
+              ? { ...cat, nombre: editValue, icono: editIcon }
+              : cat
+          )
+        );
+        setEditingId(null);
+        setEditValue("");
+        setEditIcon("ShoppingCart");
+        toast.finance.categoryUpdated();
+      } catch (error) {
+        console.error("Error al actualizar categoría:", error);
+        toast.crud.updateError("la categoría");
+      }
+    } else {
+      toast.crud.validation("El nombre de la categoría es requerido");
     }
   };
   //#endregion
@@ -143,13 +169,9 @@ export default function CategoriasPage() {
   const handleIconChange = useCallback((e: SelectChangeEvent<string>) => {
     setNuevoIcono(e.target.value);
   }, []);
-
-  const handleEditIconChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setEditIcon(e.target.value);
-    },
-    []
-  );
+  const handleEditIconChange = useCallback((e: SelectChangeEvent<string>) => {
+    setEditIcon(e.target.value);
+  }, []);
 
   return (
     <div className="p-0 md:p-6 w-full max-w-4xl  justify-start">
@@ -199,62 +221,95 @@ export default function CategoriasPage() {
         >
           Agregar
         </Button>
-      </div>
-
-      <div className="overflow-x-auto rounded-2xl shadow-md">
-        <table className="w-full border-collapse bg-white text-left text-sm text-gray-700">
-          {/* Encabezado */}
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-gray-700">Nombre</th>
-              <th className="px-6 py-3 text-gray-700">Ícono</th>
-              <th className="px-6 py-3 text-gray-700">Acciones</th>
-            </tr>
-          </thead>
-
-          {/* Cuerpo */}
-          <tbody>
+      </div>{" "}
+      {/* Card contenedor principal */}
+      <div className="bg-white shadow-md rounded-2xl p-6 min-h-[180px] w-full max-w-4xl">
+        {categorias.length > 0 ? (
+          <div className="space-y-3">
             {paginatedCategories.map((categoria) => (
-              <tr
+              <div
                 key={categoria.id}
-                className="border-b hover:bg-gray-100 transition-all"
+                className="flex justify-between items-center bg-gray-100 p-4 rounded-xl shadow-sm w-full hover:bg-gray-200 transition-all duration-200"
               >
-                <td className="px-6 py-3">
-                  {editingId === categoria.id ? (
-                    <input
-                      type="text"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="w-full border border-gray-100  rounded-lg px-2 py-3 focus:outline-none "
-                    />
-                  ) : (
-                    categoria.nombre
-                  )}
-                </td>
-                <td className="px-6 py-3">
-                  {editingId === categoria.id ? (
-                    <select
-                      value={editIcon}
-                      onChange={handleEditIconChange}
-                      className="w-full border border-gray-100  rounded-lg px-2 py-3 focus:outline-none "
-                    >
-                      {iconOptions.map((icon) => (
-                        <option key={icon} value={icon}>
-                          {iconMap[icon]}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    iconMap[categoria.icono]
-                  )}
-                </td>
-                <td className="px-6 py-3 flex space-x-2">
+                {/* Información de la categoría */}
+                <div className="flex items-center gap-4 flex-1">
+                  {" "}
+                  <div className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-sm">
+                    {editingId === categoria.id ? (
+                      <FormControl
+                        size="small"
+                        sx={{ minWidth: 48, width: 48 }}
+                      >
+                        <Select
+                          value={editIcon}
+                          onChange={handleEditIconChange}
+                          displayEmpty
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: "50%",
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+                            "& .MuiSelect-select": {
+                              padding: "0 !important",
+                              paddingRight: "0 !important",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              minHeight: "auto",
+                            },
+                            "& .MuiSelect-icon": {
+                              display: "none",
+                            },
+                          }}
+                        >
+                          {iconOptions.map((icon) => (
+                            <MenuItem key={icon} value={icon}>
+                              <div className="flex items-center justify-center">
+                                {iconMap[icon]}
+                              </div>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <div className="text-gray-700">
+                        {iconMap[categoria.icono]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    {editingId === categoria.id ? (
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                        placeholder="Nombre de la categoría"
+                      />
+                    ) : (
+                      <div>
+                        <p className="text-lg font-bold text-gray-800">
+                          {categoria.nombre}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Icono: {categoria.icono}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="flex items-center gap-2">
                   {editingId === categoria.id ? (
                     <button
                       onClick={() => handleSaveEdit(categoria.id)}
-                      className="p-1 hover:underline border-none bg-none rounded-full"
+                      className="p-2 hover:bg-gray-300 border-none bg-transparent rounded-full transition-all"
+                      title="Guardar cambios"
                     >
-                      <Save className="w-5 h-5 m-1" />
+                      <Save className="w-5 h-5 text-green-600" />
                     </button>
                   ) : (
                     <>
@@ -266,25 +321,30 @@ export default function CategoriasPage() {
                             categoria.icono
                           )
                         }
-                        className="text-gray-900 hover:underline border-none bg-none rounded-full "
+                        className="p-2 hover:bg-gray-300 border-none bg-transparent rounded-full transition-all"
+                        title="Editar categoría"
                       >
-                        <Edit className="w-5 h-5 m-1 text-gray-900" />
+                        <Edit className="w-5 h-5 text-gray-700" />
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(categoria.id)}
-                        className="text-red-500 hover:underline border-none bg-none rounded-full "
+                        className="p-2 hover:bg-gray-300 border-none bg-transparent rounded-full transition-all"
+                        title="Eliminar categoría"
                       >
-                        <Delete className="w-5 h-5 m-1" />
+                        <Delete className="w-5 h-5 text-red-500" />
                       </button>
                     </>
                   )}
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center">
+            No hay categorías registradas.
+          </p>
+        )}
       </div>
-
       {/* Paginación */}
       <div className="flex justify-end space-x-2 mt-4">
         {/* Botón Anterior */}

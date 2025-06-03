@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import dayjs from "dayjs";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 import {
   createPeriodIfNotExists,
   editExpense,
@@ -25,6 +26,7 @@ import AgregarGastos from "./components/AgregarGastos";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const toast = useToast();
 
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
@@ -93,7 +95,6 @@ export default function Dashboard() {
     return dayjs(finanzas.fechaCobro.toDate()).diff(dayjs(), "day");
   }, [finanzas]);
   //#endregion
-
   //#region Obtener Datos Finanzas
   useEffect(() => {
     if (!user) return;
@@ -120,10 +121,10 @@ export default function Dashboard() {
         setPeriodosDisponibles(ids);
       } catch (error) {
         console.error("Error listando periodos:", error);
+        toast.showError("Error al cargar los períodos disponibles");
       }
     })();
-  }, [user]);
-
+  }, [user, toast]);
   const fetchCurrentPeriodData = useCallback(async () => {
     if (!user || !periodo) return;
     setLoading(true);
@@ -133,23 +134,31 @@ export default function Dashboard() {
       setFinanzas(data);
     } catch (error) {
       console.error(error);
+      toast.showError("Error al cargar los datos financieros");
     } finally {
       setLoading(false);
     }
-  }, [user, periodo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, periodo]); // toast intencionalmente omitido para evitar bucles infinitos
 
   useEffect(() => {
     fetchCurrentPeriodData();
   }, [fetchCurrentPeriodData]);
   //#endregion
-
   //#region Gastos Funciones
   //actualiza la info cuando se agrega un gasto y cierra modal
   const handleGastoAgregado = async () => {
     setModalOpen(false);
     setLoading(true);
-    await fetchCurrentPeriodData();
-    setLoading(false);
+    try {
+      await fetchCurrentPeriodData();
+      toast.showSuccess("Gasto variable agregado exitosamente");
+    } catch (error) {
+      toast.showError("Error al cargar datos actualizados");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteExpense = async (gastoId: number) => {
@@ -160,42 +169,58 @@ export default function Dashboard() {
     );
     if (!confirmDelete) return;
 
-    const success = await deleteExpense(user.uid, periodo, gastoId);
-    if (success) {
-      setFinanzas((prev) =>
-        prev
-          ? {
-              ...prev,
-              gastosVariables: prev.gastosVariables.filter(
-                (g) => g.id !== gastoId
-              ),
-            }
-          : prev
-      );
+    try {
+      const success = await deleteExpense(user.uid, periodo, gastoId);
+      if (success) {
+        setFinanzas((prev) =>
+          prev
+            ? {
+                ...prev,
+                gastosVariables: prev.gastosVariables.filter(
+                  (g) => g.id !== gastoId
+                ),
+              }
+            : prev
+        );
+        toast.showSuccess("Gasto variable eliminado exitosamente");
+      } else {
+        toast.showError("Error al eliminar el gasto");
+      }
+    } catch (error) {
+      toast.showError("Error al eliminar el gasto");
+      console.error(error);
     }
   };
 
   const handleEditGasto = async (updatedData: Gasto) => {
     if (!user || !finanzas || !gastoEditando) return;
 
-    const success = await editExpense(
-      user.uid,
-      periodo,
-      gastoEditando.id,
-      updatedData
-    );
-    if (success) {
-      setFinanzas((prev) =>
-        prev
-          ? {
-              ...prev,
-              gastosVariables: prev.gastosVariables.map((g) =>
-                g.id === gastoEditando.id ? { ...g, ...updatedData } : g
-              ),
-            }
-          : prev
+    try {
+      const success = await editExpense(
+        user.uid,
+        periodo,
+        gastoEditando.id,
+        updatedData
       );
-      setEditModalOpen(false);
+      if (success) {
+        setFinanzas((prev) =>
+          prev
+            ? {
+                ...prev,
+                gastosVariables: prev.gastosVariables.map((g) =>
+                  g.id === gastoEditando.id ? { ...g, ...updatedData } : g
+                ),
+              }
+            : prev
+        );
+        setEditModalOpen(false);
+        toast.showSuccess("Gasto variable actualizado exitosamente");
+      } else {
+        toast.showError("Error al actualizar el gasto");
+      }
+    } catch (error) {
+      toast.showError("Error al actualizar el gasto");
+      console.error(error);
     }
   };
   //#endregion
