@@ -56,7 +56,7 @@ export default function PeriodosAdminPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const results = await listAllPeriods(user.uid);      // Ordenar si quieres
+      const results = await listAllPeriods(user.uid); // Ordenar si quieres
       results.sort((a, b) => a.id.localeCompare(b.id));
       setPeriods(
         results.map((period) => ({
@@ -173,7 +173,9 @@ export default function PeriodosAdminPage() {
     <div className="p-0 md:p-4">
       <div className="flex max-w-screen-lg justify-between items-center mb-4">
         <div className="w-full flex-col items-start md:w-80 md:flex-row flex flex-1 justify-start md:items-center">
-          <h1 className="text-xl font-bold m-0 md:mr-5">Administrar Períodos</h1>
+          <h1 className="text-xl font-bold m-0 md:mr-5">
+            Administrar Períodos
+          </h1>
         </div>
 
         <button
@@ -187,9 +189,7 @@ export default function PeriodosAdminPage() {
       <div className="grid grid-cols-1 gap-4 w-full max-w-5xl">
         {/* Card contenedor */}
         <div className="bg-white shadow-md rounded-2xl p-6 min-h-[180px]">
-          {loading && (
-            <p className="text-gray-500 text-center">Cargando...</p>
-          )}
+          {loading && <p className="text-gray-500 text-center">Cargando...</p>}
 
           {!loading && periods.length === 0 && (
             <p className="text-gray-500 text-center">
@@ -197,7 +197,8 @@ export default function PeriodosAdminPage() {
             </p>
           )}
 
-          {!loading && periods.length > 0 && (
+          {!loading &&
+            periods.length > 0 &&
             periods
               .sort((a, b) => b.id.localeCompare(a.id)) // Ordenar por fecha más reciente primero
               .map((p) => (
@@ -211,14 +212,16 @@ export default function PeriodosAdminPage() {
                       Ingresos: {formatCurrency(p.data.ingresos || 0)}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Ingresos Extras: {formatCurrency(p.data.ingresosExtras || 0)}
+                      Ingresos Extras:{" "}
+                      {formatCurrency(p.data.ingresosExtras || 0)}
                     </p>
                     <p className="text-sm text-gray-500">
                       Inversiones: {formatCurrency(p.data.inversiones || 0)}
                     </p>
                     {p.data.fechaCobro && (
                       <p className="text-sm font-semibold text-gray-700">
-                        Fecha de Cobro: {dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")}
+                        Fecha de Cobro:{" "}
+                        {dayjs(p.data.fechaCobro.toDate()).format("DD/MM/YYYY")}
                       </p>
                     )}
                   </div>
@@ -239,8 +242,7 @@ export default function PeriodosAdminPage() {
                     </div>
                   </div>
                 </div>
-              ))
-          )}
+              ))}
         </div>
       </div>
 
@@ -256,7 +258,6 @@ export default function PeriodosAdminPage() {
           <DialogTitle>
             {formState.oldId ? "Editar Período" : "Crear Período"}
           </DialogTitle>
-
           <DialogContent>
             {/* Seleccionar el Período (YYYY-MM) */}
             <DateWrapper>
@@ -333,7 +334,6 @@ export default function PeriodosAdminPage() {
               />
             </DateWrapper>
           </DialogContent>
-
           <DialogActions>
             <button
               className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none"
@@ -348,7 +348,8 @@ export default function PeriodosAdminPage() {
             >
               <span className="text-sm font-bold">Guardar</span>
             </button>
-          </DialogActions>        </Dialog>
+          </DialogActions>{" "}
+        </Dialog>
       )}
     </div>
   );
