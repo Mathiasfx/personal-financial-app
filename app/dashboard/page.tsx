@@ -92,7 +92,7 @@ export default function Dashboard() {
   //#region Dias restantes Cobro
   const diasCobro = useMemo(() => {
     if (!finanzas?.fechaCobro) return 0;
-    return dayjs(finanzas.fechaCobro.toDate()).diff(dayjs(), "day");
+    return dayjs(finanzas.fechaCobro).diff(dayjs(), "day");
   }, [finanzas]);
   //#endregion
   //#region Obtener Datos Finanzas
@@ -290,7 +290,7 @@ export default function Dashboard() {
             {loading ? (
               <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
             ) : finanzas?.fechaCobro ? (
-              dayjs(finanzas.fechaCobro.toDate()).format("DD/MM/YYYY")
+              dayjs(finanzas.fechaCobro).format("DD/MM/YYYY")
             ) : (
               "-"
             )}
@@ -470,4 +470,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
