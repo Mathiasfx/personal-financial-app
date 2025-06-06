@@ -21,6 +21,7 @@ import MenuItem from "@mui/material/MenuItem";
 
 import { saveExpence, getCategories } from "@/lib/finanzasService";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 
 import { NuevoGasto } from "@/models/nuevoGasto.model";
 import { Categorias } from "@/models/categorias.model";
@@ -35,6 +36,7 @@ const AgregarGastos = ({
   periodo,
 }: NuevoGasto) => {
   const { user } = useAuth();
+  const toast = useToast();
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState<Categorias | null>(null);
@@ -44,17 +46,23 @@ const AgregarGastos = ({
   useEffect(() => {
     if (user && open) {
       const fetchCategorias = async () => {
-        const categorias = await getCategories(user?.uid);
-
-        setCategoriasBD(categorias);
+        try {
+          const categorias = await getCategories(user?.uid);
+          setCategoriasBD(categorias);
+        } catch (error) {
+          console.error("Error loading categories:", error);
+          toast.showError("Error al cargar las categorías");
+        }
       };
       fetchCategorias();
     }
-  }, [user, open, categoriasDB]);
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, open]); // toast intencionalmente omitido para evitar bucles infinitos
   const handleGuardarGasto = async () => {
-    if (!descripcion || !monto || !categoria || !periodo || !fecha)
-      return alert("Completa todos los campos");
+    if (!descripcion || !monto || !categoria || !periodo || !fecha) {
+      toast.showWarning("Por favor completa todos los campos");
+      return;
+    }
 
     const nuevoGasto = {
       descripcion,
@@ -71,8 +79,10 @@ const AgregarGastos = ({
       await saveExpence(user.uid, periodo, nuevoGasto); // Usa el período correcto
       onGastoAgregado(); // Actualiza el Dashboard
       onClose(); // Cierra el modal
+      toast.showSuccess("Gasto agregado exitosamente");
     } catch (error) {
       console.error("Error al guardar el gasto:", error);
+      toast.showError("Error al guardar el gasto");
     } finally {
       setDescripcion("");
       setMonto("");

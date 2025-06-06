@@ -2,6 +2,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/lib/useToast";
 import {
   listAllPeriods,
   createPeriod,
@@ -31,6 +32,7 @@ interface PeriodDoc {
 
 export default function PeriodosAdminPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [periods, setPeriods] = useState<PeriodDoc[]>([]);
 
@@ -44,19 +46,17 @@ export default function PeriodosAdminPage() {
     inversiones: number;
     fechaCobro: Dayjs | null;
   } | null>(null);
-
   // Al montar, listamos los períodos
   useEffect(() => {
     if (!user) return;
     loadPeriods();
-  }, [user]);
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // toast intencionalmente omitido para evitar bucles infinitos
   async function loadPeriods() {
     if (!user) return;
     setLoading(true);
     try {
-      const results = await listAllPeriods(user.uid);
-      // Ordenar si quieres
+      const results = await listAllPeriods(user.uid); // Ordenar si quieres
       results.sort((a, b) => a.id.localeCompare(b.id));
       setPeriods(
         results.map((period) => ({
@@ -64,8 +64,10 @@ export default function PeriodosAdminPage() {
           data: period.data as Finanzas,
         }))
       );
+      // Removida notificación redundante de carga exitosa
     } catch (error) {
       console.error("Error listando periodos:", error);
+      toast.showError("Error al cargar los períodos");
     } finally {
       setLoading(false);
     }
@@ -96,10 +98,10 @@ export default function PeriodosAdminPage() {
     });
     setModalOpen(true);
   }
-
   // Guardar (crear o editar)
   async function handleSubmitForm() {
     if (!formState || !user) return;
+
     const {
       oldId,
       yearMonth,
@@ -108,6 +110,12 @@ export default function PeriodosAdminPage() {
       inversiones,
       fechaCobro,
     } = formState;
+
+    // Validar campos requeridos
+    if (!yearMonth || ingresos < 0 || ingresosExtras < 0 || inversiones < 0) {
+      toast.showWarning("Por favor completa todos los campos correctamente");
+      return;
+    }
 
     try {
       const dataToSave = {
@@ -120,14 +128,17 @@ export default function PeriodosAdminPage() {
       // CREAR
       if (!oldId) {
         await createPeriod(user.uid, yearMonth, dataToSave);
+        toast.showSuccess("Período creado exitosamente");
       } else {
         // EDIT: si no cambió el ID => update
         if (oldId === yearMonth) {
           await updatePeriod(user.uid, yearMonth, dataToSave);
+          toast.showSuccess("Período actualizado exitosamente");
         } else {
           // EDIT: si cambió el ID => rename + update
           // await renamePeriod(user.uid, oldId, yearMonth);
           // await updatePeriod(user.uid, yearMonth, dataToSave);
+          toast.showWarning("Cambio de ID de período no implementado");
         }
       }
 
@@ -136,10 +147,11 @@ export default function PeriodosAdminPage() {
       loadPeriods();
     } catch (error) {
       console.error(error);
-      alert((error as Error).message);
+      toast.showError(
+        "Error al guardar el período: " + (error as Error).message
+      );
     }
   }
-
   // Borrar
   async function handleDelete(id: string) {
     if (!user) return;
@@ -149,82 +161,88 @@ export default function PeriodosAdminPage() {
     try {
       await deletePeriod(user.uid, id);
       loadPeriods();
+      toast.showSuccess("Período eliminado exitosamente");
     } catch (error) {
       console.error(error);
+      toast.showError("Error al eliminar el período");
     }
   }
-
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Administrar Períodos</h1>
-
-      <button
-        className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none mb-2"
-        onClick={handleOpenCreate}
-      >
-        <span className="text-sm font-bold"> Crear Nuevo Período</span>
-      </button>
-
-      {loading && <p>Cargando...</p>}
-
-      {!loading && periods.length === 0 && (
-        <p>No hay períodos creados todavía.</p>
-      )}
-
-      {!loading && periods.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl shadow-md">
-          <table className="w-full border-collapse bg-white text-left text-sm text-gray-700">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-2 py-2">Período (ID)</th>
-                <th className="px-2 py-2">Ingresos</th>
-                <th className="px-2 py-2">Ingresos Extras</th>
-                <th className="px-2 py-2">Inversiones</th>
-                <th className="px-2 py-2">Fecha de Cobro</th>
-                <th className="px-2 py-2">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {periods.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b hover:bg-gray-100 transition-all"
-                >
-                  <td className="px-6 py-3">{p.id}</td>
-                  <td className="px-2 py-2">
-                    {formatCurrency(p.data.ingresos) || 0}
-                  </td>
-                  <td className="px-2 py-2">
-                    {formatCurrency(p.data.ingresosExtras) || 0}
-                  </td>
-                  <td className="px-2 py-2">
-                    {formatCurrency(p.data.inversiones) || 0}
-                  </td>
-                  <td className="px-2 py-2">
-                    {p.data.fechaCobro
-                      ? dayjs(p.data.fechaCobro).format("DD/MM/YYYY")
-                      : ""}
-                  </td>
-                  <td className="px-6 py-3 flex space-x-2">
-                    <button
-                      onClick={() => handleOpenEdit(p)}
-                      className="rounded-full border-none mr-1 bg-gray-300 hover:bg-gray-400 transition-all"
-                    >
-                      <Edit className="w-5 h-5 text-gray-700 m-1 " />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
-                    >
-                      <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="p-0 md:p-4">
+      <div className="flex max-w-screen-lg justify-between items-center mb-4">
+        <div className="w-full flex-col items-start md:w-80 md:flex-row flex flex-1 justify-start md:items-center">
+          <h1 className="text-xl font-bold m-0 md:mr-5">
+            Administrar Períodos
+          </h1>
         </div>
-      )}
+
+        <button
+          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300 mb-2"
+          onClick={handleOpenCreate}
+        >
+          <span className="text-lg font-bold">Crear Nuevo Período</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 w-full max-w-5xl">
+        {/* Card contenedor */}
+        <div className="bg-white shadow-md rounded-2xl p-6 min-h-[180px]">
+          {loading && <p className="text-gray-500 text-center">Cargando...</p>}
+
+          {!loading && periods.length === 0 && (
+            <p className="text-gray-500 text-center">
+              No hay períodos creados todavía.
+            </p>
+          )}
+
+          {!loading &&
+            periods.length > 0 &&
+            periods
+              .sort((a, b) => b.id.localeCompare(a.id)) // Ordenar por fecha más reciente primero
+              .map((p) => (
+                <div
+                  key={p.id}
+                  className="flex justify-between items-center bg-gray-100 p-4 rounded-xl shadow-sm w-full mb-3"
+                >
+                  <div>
+                    <p className="text-lg font-bold">{p.id}</p>
+                    <p className="text-sm text-gray-500">
+                      Ingresos: {formatCurrency(p.data.ingresos || 0)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Ingresos Extras:{" "}
+                      {formatCurrency(p.data.ingresosExtras || 0)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Inversiones: {formatCurrency(p.data.inversiones || 0)}
+                    </p>
+                    {p.data.fechaCobro && (
+                      <p className="text-sm font-semibold text-gray-700">
+                        Fecha de Cobro:{" "}
+                        {dayjs(p.data.fechaCobro).format("DD/MM/YYYY")}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end space-x-2">
+                    <div className="w-full flex justify-center items-center gap-2">
+                      <button
+                        onClick={() => handleOpenEdit(p)}
+                        className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                      >
+                        <Edit className="w-5 h-5 text-gray-700 m-1" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        className="rounded-full border-none bg-gray-300 hover:bg-gray-400 transition-all"
+                      >
+                        <DeleteRounded className="w-5 h-5 text-red-500 m-1" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+        </div>
+      </div>
 
       {formState && (
         <Dialog
@@ -238,7 +256,6 @@ export default function PeriodosAdminPage() {
           <DialogTitle>
             {formState.oldId ? "Editar Período" : "Crear Período"}
           </DialogTitle>
-
           <DialogContent>
             {/* Seleccionar el Período (YYYY-MM) */}
             <DateWrapper>
@@ -315,7 +332,6 @@ export default function PeriodosAdminPage() {
               />
             </DateWrapper>
           </DialogContent>
-
           <DialogActions>
             <button
               className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none"
@@ -330,103 +346,9 @@ export default function PeriodosAdminPage() {
             >
               <span className="text-sm font-bold">Guardar</span>
             </button>
-          </DialogActions>
+          </DialogActions>{" "}
         </Dialog>
       )}
-      {/* {modalOpen && formState && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center"
-          onClick={() => setModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-md p-4 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-bold mb-2">
-              {formState.oldId ? "Editar Período" : "Crear Período"}
-            </h2>
-
-            <DateWrapper>
-              <DatePicker
-                label="Período (YYYY-MM)"
-                views={["year", "month"]} // Solo año + mes
-                // Si no tienes un día definido, puedes armar un string "YYYY-MM" + día "01"
-                // y lo pasas a dayjs para no tener problemas.
-                value={
-                  formState.yearMonth
-                    ? dayjs(`${formState.yearMonth}-01`)
-                    : null
-                }
-                onChange={(newValue: Dayjs | null) => {
-                  if (newValue) {
-                    // Guardas en tu estado solo "YYYY-MM"
-                    setFormState({
-                      ...formState,
-                      yearMonth: newValue.format("YYYY-MM"),
-                    });
-                  }
-                }}
-                sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
-              />
-            </DateWrapper>
-
-            <TextField
-              label="Ingresos"
-              type="number"
-              fullWidth
-              value={formState.ingresos}
-              onChange={(e) =>
-                setFormState({ ...formState, ingresos: Number(e.target.value) })
-              }
-            />
-
-            <TextField
-              label="Inversiones"
-              type="number"
-              fullWidth
-              value={formState.inversiones}
-              onChange={(e) =>
-                setFormState({
-                  ...formState,
-                  inversiones: Number(e.target.value),
-                })
-              }
-              sx={{ marginBottom: "1rem", marginTop: "1rem" }}
-            />
-
-            <DateWrapper>
-              <DatePicker
-                label=" Fecha Cobro "
-                value={formState.fechaCobro}
-                onChange={(newValue: Dayjs | null) => {
-                  if (newValue) {
-                    setFormState({
-                      ...formState,
-                      fechaCobro: newValue,
-                    });
-                  }
-                }}
-                sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
-              />
-            </DateWrapper>
-
-            <div className="flex justify-end space-x-2">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded-md"
-                onClick={() => setModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                onClick={handleSubmitForm}
-              >
-                Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }
