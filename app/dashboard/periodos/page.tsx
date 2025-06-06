@@ -25,6 +25,34 @@ import {
 import { Timestamp } from "firebase/firestore/lite";
 import { DeleteRounded, Edit } from "@mui/icons-material";
 
+// Helper function to convert Firebase Timestamp to Date for dayjs
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertFirebaseTimestamp(timestamp: any): Date | null {
+  if (!timestamp) return null;
+
+  // If it's already a Date object, return as is
+  if (timestamp instanceof Date) return timestamp;
+
+  // If it's a Firebase Timestamp with seconds and nanoseconds
+  if (timestamp && typeof timestamp === "object" && "seconds" in timestamp) {
+    return new Date(
+      timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000
+    );
+  }
+
+  // If it's a Firestore Timestamp object
+  if (timestamp && typeof timestamp.toDate === "function") {
+    return timestamp.toDate();
+  }
+
+  // Try to parse as regular date string/number
+  try {
+    return new Date(timestamp);
+  } catch {
+    return null;
+  }
+}
+
 interface PeriodDoc {
   id: string;
   data: Finanzas;
@@ -85,16 +113,16 @@ export default function PeriodosAdminPage() {
     });
     setModalOpen(true);
   }
-
   // Abre formulario con data => EDIT
   function handleOpenEdit(period: PeriodDoc) {
+    const convertedDate = convertFirebaseTimestamp(period.data.fechaCobro);
     setFormState({
       oldId: period.id,
       yearMonth: period.id,
       ingresos: period.data.ingresos || 0,
       ingresosExtras: period.data.ingresosExtras || 0,
       inversiones: period.data.inversiones || 0,
-      fechaCobro: period.data.fechaCobro ? dayjs(period.data.fechaCobro) : null,
+      fechaCobro: convertedDate ? dayjs(convertedDate) : null,
     });
     setModalOpen(true);
   }
@@ -215,11 +243,19 @@ export default function PeriodosAdminPage() {
                     </p>
                     <p className="text-sm text-gray-500">
                       Inversiones: {formatCurrency(p.data.inversiones || 0)}
-                    </p>
+                    </p>{" "}
                     {p.data.fechaCobro && (
                       <p className="text-sm font-semibold text-gray-700">
                         Fecha de Cobro:{" "}
-                        {dayjs(p.data.fechaCobro).format("DD/MM/YYYY")}
+                        {(() => {
+                          const convertedDate = convertFirebaseTimestamp(
+                            p.data.fechaCobro
+                          );
+                          if (convertedDate) {
+                            return dayjs(convertedDate).format("DD/MM/YYYY");
+                          }
+                          return "Fecha inválida";
+                        })()}
                       </p>
                     )}
                   </div>
