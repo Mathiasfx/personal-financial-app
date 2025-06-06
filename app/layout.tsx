@@ -43,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={lufga.className}>
+      <body className={lufga.className} suppressHydrationWarning={true}>
         <AuthProvider>
           <NotificationProvider>
             <CssBaseline />

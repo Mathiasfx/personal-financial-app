@@ -11,13 +11,10 @@ import {
 } from "@/lib/finanzasService";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
-
 import { SelectChangeEvent } from "@mui/material/Select";
-
 import { Edit, Delete, Save } from "@mui/icons-material";
 import {
   ShoppingCart,
@@ -33,6 +30,7 @@ import {
   Work,
   School,
 } from "@mui/icons-material";
+
 
 export default function CategoriasPage() {
   const iconMap: { [key: string]: JSX.Element } = useMemo(
@@ -78,13 +76,14 @@ export default function CategoriasPage() {
     }
   }, [user, toast]);
 
+
   const paginatedCategories = useMemo(
     () =>
       categorias.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [categorias, page, rowsPerPage]
   );
   //#region Agregar Categoría
-  const handleAddCategory = useCallback(async () => {
+    const handleAddCategory = useCallback(async () => {
     if (user && nuevaCategoria.trim()) {
       try {
         const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
@@ -102,6 +101,7 @@ export default function CategoriasPage() {
     }
   }, [user, nuevaCategoria, nuevoIcono, toast]);
   //#endregion
+  
   //#region Eliminar Categoría
   const handleDeleteCategory = useCallback(
     async (categoryId: string) => {
@@ -118,7 +118,8 @@ export default function CategoriasPage() {
     },
     [user, toast]
   );
-  //#endregion
+   //#endregion
+
 
   //#region Editar Categoría
   const handleEditCategory = (
@@ -131,6 +132,7 @@ export default function CategoriasPage() {
     setEditIcon(iconoActual);
   };
   //#endregion
+  //#region Guardar Editar Categoría
   //#region Guardar Editar Categoría
   const handleSaveEdit = async (categoryId: string) => {
     if (user && editValue.trim()) {
@@ -159,7 +161,7 @@ export default function CategoriasPage() {
     }
   };
   //#endregion
-
+  
   //#region Paginación
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
