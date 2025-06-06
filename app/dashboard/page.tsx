@@ -13,10 +13,13 @@ import {
   editExpense,
   getFinancialData,
   listAllPeriods,
+  getCategories,
 } from "@/lib/finanzasService";
 import { Finanzas } from "@/models/finanzas.model";
+import { Categorias } from "@/models/categorias.model";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Gasto } from "@/models/gasto.model";
+import { MenuItem } from "@mui/material";
 //import { getLatestFinancialPeriod } from "@/lib/finanzasService";
 import { formatCurrency } from "@/lib/utils";
 import { Edit, DeleteRounded } from "@mui/icons-material";
@@ -28,6 +31,14 @@ export default function Dashboard() {
   const { user } = useAuth();
   const toast = useToast();
 
+  // Helper function to convert Firebase Timestamp to Date
+  const convertFirebaseTimestamp = (timestamp: unknown): Date | string => {
+    if (timestamp && typeof timestamp === "object" && "seconds" in timestamp) {
+      return new Date((timestamp as { seconds: number }).seconds * 1000);
+    }
+    return timestamp as string;
+  };
+
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState(dayjs().format("YYYY-MM"));
@@ -36,6 +47,7 @@ export default function Dashboard() {
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [categorias, setCategorias] = useState<Categorias[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
 
   const lastGastoRef = useCallback(
@@ -87,15 +99,18 @@ export default function Dashboard() {
         (finanzas?.inversiones ? finanzas.inversiones : 0))
     );
   }, [finanzas, totalGastosFijos, totalGastosVariables]);
-  //#endregion
-
-  //#region Dias restantes Cobro
+  //#endregion  //#region Dias restantes Cobro
   const diasCobro = useMemo(() => {
     if (!finanzas?.fechaCobro) return 0;
-    return dayjs(finanzas.fechaCobro).diff(dayjs(), "day");
+
+    const fechaCobroDate = convertFirebaseTimestamp(finanzas.fechaCobro);
+    const fechaCobro = dayjs(fechaCobroDate);
+
+    if (!fechaCobro.isValid()) return 0;
+
+    return fechaCobro.diff(dayjs(), "day");
   }, [finanzas]);
-  //#endregion
-  //#region Obtener Datos Finanzas
+  //#endregion  //#region Obtener Datos Finanzas
   useEffect(() => {
     if (!user) return;
 
@@ -119,6 +134,10 @@ export default function Dashboard() {
         }
 
         setPeriodosDisponibles(ids);
+
+        // Cargar categorías
+        const categoriasData = await getCategories(user.uid);
+        setCategorias(categoriasData);
       } catch (error) {
         console.error("Error listando periodos:", error);
         toast.showError("Error al cargar los períodos disponibles");
@@ -260,7 +279,6 @@ export default function Dashboard() {
               </select>
             </div>
           )}
-
           <p className="text-lg m-0">
             Ingresos:{" "}
             {loading ? (
@@ -284,13 +302,15 @@ export default function Dashboard() {
             ) : (
               formatCurrency(finanzas?.inversiones || 0)
             )}
-          </p>
+          </p>{" "}
           <p className="text-lg m-0">
             Fecha de Cobro:{" "}
             {loading ? (
               <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
             ) : finanzas?.fechaCobro ? (
-              dayjs(finanzas.fechaCobro).format("DD/MM/YYYY")
+              dayjs(convertFirebaseTimestamp(finanzas.fechaCobro)).format(
+                "DD/MM/YYYY"
+              )
             ) : (
               "-"
             )}
@@ -361,6 +381,11 @@ export default function Dashboard() {
                   >
                     <div>
                       <p className="font-bold">{gasto.descripcion}</p>
+                      {gasto.categoria && (
+                        <p className="text-sm text-gray-700 font-medium">
+                          {gasto.categoria.nombre}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-500">
                         {dayjs(gasto.fecha).format("DD/MM/YYYY")}
                       </p>
@@ -415,7 +440,7 @@ export default function Dashboard() {
               )
             }
             sx={{ marginBottom: "1rem", marginTop: "1rem" }}
-          />
+          />{" "}
           <TextField
             label="Monto"
             type="number"
@@ -428,6 +453,37 @@ export default function Dashboard() {
             }
             sx={{ marginBottom: "1rem", marginTop: "1rem" }}
           />
+          <TextField
+            select
+            label="Categoría"
+            fullWidth
+            value={gastoEditando?.categoria?.id || ""}
+            onChange={(e) => {
+              const selectedCategoria = categorias.find(
+                (cat) => cat.id === e.target.value
+              );
+              setGastoEditando((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      categoria: selectedCategoria || {
+                        id: "",
+                        nombre: "",
+                        icono: "",
+                      },
+                    }
+                  : prev
+              );
+            }}
+            sx={{ marginBottom: "1rem" }}
+          >
+            {" "}
+            {categorias.map((categoria) => (
+              <MenuItem key={categoria.id} value={categoria.id}>
+                <span>{categoria.nombre}</span>
+              </MenuItem>
+            ))}
+          </TextField>
           <DateWrapper>
             <DatePicker
               label="Fecha"
