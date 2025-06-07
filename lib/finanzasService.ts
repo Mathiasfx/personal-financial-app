@@ -7,6 +7,44 @@ import { getPreviousPeriod } from "./utils";
 import { Finanzas } from "@/models/finanzas.model";
 import dayjs from "dayjs";
 
+/**
+ * Helper function para actualizar la fecha de vencimiento al nuevo mes
+ * Mantiene el mismo día pero cambia el año-mes
+ */
+function updateDateToNewMonth(
+  fechaVencimiento: Date | { seconds: number; nanoseconds: number } | any, 
+  newYearMonth: string
+): Date {
+  try {
+    let originalDate: dayjs.Dayjs;
+    
+    // Manejar diferentes tipos de fecha (Date, Timestamp de Firestore, etc.)
+    if (fechaVencimiento instanceof Date) {
+      originalDate = dayjs(fechaVencimiento);
+    } else if (fechaVencimiento?.seconds) {
+      // Timestamp de Firestore
+      originalDate = dayjs(fechaVencimiento.seconds * 1000);
+    } else if (typeof fechaVencimiento === 'string') {
+      originalDate = dayjs(fechaVencimiento);
+    } else {
+      // Fallback: intentar parsear como está
+      originalDate = dayjs(fechaVencimiento);
+    }
+
+    // Extraer el día del mes original
+    const dayOfMonth = originalDate.date();
+    
+    // Crear nueva fecha con el nuevo año-mes y el mismo día
+    const newDate = dayjs(newYearMonth + '-01').date(dayOfMonth);
+    
+    return newDate.toDate();
+  } catch (error) {
+    console.error('Error actualizando fecha de vencimiento:', error);
+    // En caso de error, devolver una fecha por defecto (primer día del nuevo mes)
+    return dayjs(newYearMonth + '-01').toDate();
+  }
+}
+
 //#region Periodo y Finanzas
 /**
  * Lista todos los períodos que existen
@@ -43,7 +81,6 @@ export async function createPeriod(
   const prevSnap = await getDoc(prevDocRef);
 
   const gastosFijos: Record<string, GastoFijo> = {};
-
   // Copiar Gastos Fijos
   if (prevSnap.exists()) {
     const prevData = prevSnap.data();
@@ -52,11 +89,14 @@ export async function createPeriod(
       const gf = prevData.gastosFijos as Record<string, GastoFijo>;
     
       for (const key in gf) {
+        const gastoOriginal = gf[key];
         gastosFijos[key] = {
-          ...gf[key],
-          pagado: false, 
-         
-          
+          ...gastoOriginal,
+          pagado: false,
+          // Actualizar fechaVencimiento al nuevo mes si existe
+          fechaVencimiento: gastoOriginal.fechaVencimiento 
+            ? updateDateToNewMonth(gastoOriginal.fechaVencimiento, yearMonth)
+            : gastoOriginal.fechaVencimiento
         };
       }
     }
@@ -162,16 +202,17 @@ export async function createPeriodIfNotExists(
       newData.ingresos = prevData.ingresos || 0;
 
 
-    
-
-      // Copiamos gastos fijos y seteamos pagado = false, si tu lógica lo requiere.
+        // Copiamos gastos fijos y seteamos pagado = false, si tu lógica lo requiere.
       if (prevData.gastosFijos) {
         const clonados: any = {};
         Object.entries(prevData.gastosFijos).forEach(([key, gasto]: any) => {
           clonados[key] = {
             ...gasto,
             pagado: false,
-           
+            // Actualizar fechaVencimiento al nuevo mes si existe
+            fechaVencimiento: gasto.fechaVencimiento 
+              ? updateDateToNewMonth(gasto.fechaVencimiento, yearMonth)
+              : gasto.fechaVencimiento
           };
         });
         newData.gastosFijos = clonados;

@@ -5,6 +5,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
+import { Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/lib/useToast";
@@ -26,6 +27,7 @@ import { Edit, DeleteRounded } from "@mui/icons-material";
 import { deleteExpense } from "@/lib/finanzasService";
 import DateWrapper from "./components/DateWrapper";
 import AgregarGastos from "./components/AgregarGastos";
+import WelcomeMessage from "./components/WelcomeMessage";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -38,16 +40,17 @@ export default function Dashboard() {
     }
     return timestamp as string;
   };
-
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
-  const [periodo, setPeriodo] = useState(dayjs().format("YYYY-MM"));
+  const [periodo, setPeriodo] = useState(""); // Inicializar vacío hasta detectar tipo de usuario
   const [loading, setLoading] = useState<boolean>(true);
   const [numGastos, setNumGastos] = useState(10);
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [categorias, setCategorias] = useState<Categorias[]>([]);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
 
   const lastGastoRef = useCallback(
@@ -120,22 +123,30 @@ export default function Dashboard() {
         // listAllPeriods -> te retorna un array de { id, data }
 
         // Extraemos sólo los IDs
-        const ids = allPeriods.map((p) => p.id);
+        const ids = allPeriods.map((p) => p.id); // Detectar si es usuario nuevo (no tiene períodos)
+        const isUserNew = ids.length === 0;
+        setIsNewUser(isUserNew);
 
-        // Ordenamos los IDs (opcional)
-        ids.sort();
-
-        // Si prefieres que siempre aparezca el mes actual en el select
-        // aunque no exista todavía en la base:
-        const current = dayjs().format("YYYY-MM");
-        if (!ids.includes(current)) {
-          ids.push(current);
-          ids.sort();
+        if (isUserNew) {
+          setShowWelcome(true);
         }
 
-        setPeriodosDisponibles(ids);
+        // Ordenamos los IDs (opcional)
+        ids.sort(); // Solo agregar el mes actual al select si NO es usuario nuevo
+        // Para usuarios nuevos, la lista debe estar vacía hasta que completen el wizard
+        if (!isUserNew) {
+          const current = dayjs().format("YYYY-MM");
+          if (!ids.includes(current)) {
+            ids.push(current);
+            ids.sort();
+          }
+          // Solo establecer período para usuarios recurrentes
+          if (!periodo) {
+            setPeriodo(current);
+          }
+        }
 
-        // Cargar categorías
+        setPeriodosDisponibles(ids); // Cargar categorías
         const categoriasData = await getCategories(user.uid);
         setCategorias(categoriasData);
       } catch (error) {
@@ -143,9 +154,16 @@ export default function Dashboard() {
         toast.showError("Error al cargar los períodos disponibles");
       }
     })();
-  }, [user, toast]);
+  }, [user, toast, periodo]);
   const fetchCurrentPeriodData = useCallback(async () => {
     if (!user || !periodo) return;
+
+    // No crear período automáticamente si es usuario nuevo y aún no completó el wizard
+    if (isNewUser && showWelcome) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       await createPeriodIfNotExists(user.uid, periodo); // Crea si no existe
@@ -158,8 +176,7 @@ export default function Dashboard() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, periodo]); // toast intencionalmente omitido para evitar bucles infinitos
-
+  }, [user, periodo, isNewUser, showWelcome]); // toast intencionalmente omitido para evitar bucles infinitos
   useEffect(() => {
     fetchCurrentPeriodData();
   }, [fetchCurrentPeriodData]);
@@ -243,7 +260,41 @@ export default function Dashboard() {
     }
   };
   //#endregion
+  //#region Welcome Message Handlers
+  const handleWelcomeComplete = async () => {
+    setShowWelcome(false);
+    setIsNewUser(false);
 
+    // Refrescar los datos después de crear el primer período
+    try {
+      const allPeriods = await listAllPeriods(user?.uid || "");
+      const ids = allPeriods.map((p) => p.id);
+      ids.sort();
+
+      const current = dayjs().format("YYYY-MM");
+      if (!ids.includes(current)) {
+        ids.push(current);
+        ids.sort();
+      }
+
+      setPeriodosDisponibles(ids);
+
+      // Establecer el período actual para el usuario
+      setPeriodo(current);
+
+      toast.showSuccess(
+        "¡Bienvenido! Tu primer período ha sido creado exitosamente."
+      );
+    } catch (error) {
+      console.error("Error refrescando datos:", error);
+      toast.showError("Error al cargar los datos del nuevo período");
+    }
+  };
+
+  const handleWelcomeClose = () => {
+    setShowWelcome(false);
+  };
+  //#endregion
   return (
     <div className="p-0 md:p-4">
       <div className="w-full max-w-7xl flex justify-end">
@@ -254,274 +305,308 @@ export default function Dashboard() {
         >
           <span className="text-xl font-bold">+</span>
           <span className="text-lg font-medium">Nuevo Gasto</span>
-        </button>
+        </button>{" "}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl">
-        <div className="w-full max-w-lg bg-white shadow-md rounded-xl p-4">
-          {periodosDisponibles.length > 0 && (
-            <div className="my-4 flex">
-              <h6 className="text-xl font-bold text-gray-800  m-0 ">
-                Estado del mes{" "}
+
+      {/* Solo mostrar contenido principal si no es usuario nuevo o ya completó el wizard */}
+      {(!isNewUser || !showWelcome) && (
+        <>
+          {/* Mensaje para usuarios nuevos que ya completaron el wizard */}
+          {isNewUser && !showWelcome && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 w-full max-w-7xl">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">👋</span>
+                <div>
+                  <Typography
+                    variant="h6"
+                    className="font-semibold text-blue-800 mb-1"
+                  >
+                    ¡Bienvenido/a a tu nuevo gestor financiero!
+                  </Typography>
+                  <Typography variant="body2" className="text-blue-700">
+                    Comienza agregando tus gastos fijos en el menú lateral o
+                    registra tu primer gasto variable aquí.
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl">
+            <div className="w-full max-w-lg bg-white shadow-md rounded-xl p-4">
+              {periodosDisponibles.length > 0 && (
+                <div className="my-4 flex">
+                  <h6 className="text-xl font-bold text-gray-800  m-0 ">
+                    Estado del mes{" "}
+                    {loading ? (
+                      <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                    ) : null}
+                  </h6>
+                  <select
+                    value={periodo}
+                    onChange={(e) => setPeriodo(e.target.value)}
+                    className="border rounded-md p-2 ml-2 text-sm font-semibold w-32 "
+                  >
+                    {periodosDisponibles.map((p) => (
+                      <option key={p} value={p} className="text-sm">
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <p className="text-lg m-0">
+                Ingresos:{" "}
                 {loading ? (
                   <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-                ) : null}
+                ) : (
+                  formatCurrency(finanzas?.ingresos || 0)
+                )}
+              </p>
+              <p className="text-lg m-0">
+                Ingresos Extras:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : (
+                  formatCurrency(finanzas?.ingresosExtras || 0)
+                )}
+              </p>
+              <p className="text-lg m-0">
+                Inversiones:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : (
+                  formatCurrency(finanzas?.inversiones || 0)
+                )}
+              </p>{" "}
+              <p className="text-lg m-0">
+                Fecha de Cobro:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : finanzas?.fechaCobro ? (
+                  dayjs(convertFirebaseTimestamp(finanzas.fechaCobro)).format(
+                    "DD/MM/YYYY"
+                  )
+                ) : (
+                  "-"
+                )}
+              </p>
+            </div>
+
+            <div className="w-full max-w-lg bg-gray-900 text-white shadow-md rounded-xl p-4 ">
+              <h6 className="text-xl font-bold text-yellow-400 m-0">Resumen</h6>
+              <p className="text-2xl m-0">
+                Disponible:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : (
+                  formatCurrency(dineroDisponible)
+                )}
+              </p>
+              <p className="text-lg m-0">
+                Días restantes:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : (
+                  diasCobro
+                )}
+              </p>
+              <p className="m-0">
+                Total Gastos Fijos:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : (
+                  formatCurrency(totalGastosFijos)
+                )}
+              </p>
+              <p className="m-0">
+                Total Gastos Variables:{" "}
+                {loading ? (
+                  <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
+                ) : (
+                  formatCurrency(totalGastosVariables)
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-4">
+            <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-7xl ">
+              <h6 className="text-xl font-bold text-gray-800 mb-4">
+                Transacciones de gastos variables
               </h6>
-              <select
-                value={periodo}
-                onChange={(e) => setPeriodo(e.target.value)}
-                className="border rounded-md p-2 ml-2 text-sm font-semibold w-32 "
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((_, index) => (
+                    <div
+                      key={index}
+                      className="w-full h-20 bg-gray-300 animate-pulse rounded-lg"
+                    ></div>
+                  ))}
+                </div>
+              ) : finanzas?.gastosVariables?.length && user ? (
+                <div className="space-y-4">
+                  {finanzas?.gastosVariables
+                    .sort((a, b) => dayjs(b.fecha).diff(dayjs(a.fecha)))
+                    .slice(0, numGastos)
+                    .map((gasto, index) => (
+                      <div
+                        key={gasto.id}
+                        ref={index === numGastos - 1 ? lastGastoRef : null}
+                        className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-bold">{gasto.descripcion}</p>
+                          {gasto.categoria && (
+                            <p className="text-sm text-gray-700 font-medium">
+                              {gasto.categoria.nombre}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500">
+                            {dayjs(gasto.fecha).format("DD/MM/YYYY")}
+                          </p>
+                          <span className="text-red-500 font-bold">
+                            -{formatCurrency(gasto.monto)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleOpenEditModal(gasto)}
+                            className="text-gray-900 hover:underline border-none bg-none rounded-full "
+                          >
+                            <Edit className="m-1 text-gray-900" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteExpense(gasto.id)}
+                            className="text-red-500 hover:underline border-none bg-none rounded-full "
+                          >
+                            <DeleteRounded className="m-1" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No hay transacciones</p>
+              )}
+            </div>
+          </div>
+
+          <Dialog
+            open={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            fullWidth
+            maxWidth="sm"
+            slotProps={{ paper: { sx: { borderRadius: "24px" } } }}
+          >
+            <DialogTitle>Editar Gasto</DialogTitle>
+            <DialogContent>
+              <TextField
+                label="Descripción"
+                fullWidth
+                defaultValue={gastoEditando?.descripcion}
+                onChange={(e) =>
+                  setGastoEditando((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          descripcion: e.target.value,
+                        }
+                      : prev
+                  )
+                }
+                sx={{ marginBottom: "1rem", marginTop: "1rem" }}
+              />{" "}
+              <TextField
+                label="Monto"
+                type="number"
+                fullWidth
+                defaultValue={gastoEditando?.monto}
+                onChange={(e) =>
+                  setGastoEditando((prev) =>
+                    prev ? { ...prev, monto: Number(e.target.value) } : prev
+                  )
+                }
+                sx={{ marginBottom: "1rem", marginTop: "1rem" }}
+              />
+              <TextField
+                select
+                label="Categoría"
+                fullWidth
+                value={gastoEditando?.categoria?.id || ""}
+                onChange={(e) => {
+                  const selectedCategoria = categorias.find(
+                    (cat) => cat.id === e.target.value
+                  );
+                  setGastoEditando((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          categoria: selectedCategoria || {
+                            id: "",
+                            nombre: "",
+                            icono: "",
+                          },
+                        }
+                      : prev
+                  );
+                }}
+                sx={{ marginBottom: "1rem" }}
               >
-                {periodosDisponibles.map((p) => (
-                  <option key={p} value={p} className="text-sm">
-                    {p}
-                  </option>
+                {" "}
+                {categorias.map((categoria) => (
+                  <MenuItem key={categoria.id} value={categoria.id}>
+                    <span>{categoria.nombre}</span>
+                  </MenuItem>
                 ))}
-              </select>
-            </div>
-          )}
-          <p className="text-lg m-0">
-            Ingresos:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              formatCurrency(finanzas?.ingresos || 0)
-            )}
-          </p>
-          <p className="text-lg m-0">
-            Ingresos Extras:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              formatCurrency(finanzas?.ingresosExtras || 0)
-            )}
-          </p>
-          <p className="text-lg m-0">
-            Inversiones:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              formatCurrency(finanzas?.inversiones || 0)
-            )}
-          </p>{" "}
-          <p className="text-lg m-0">
-            Fecha de Cobro:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : finanzas?.fechaCobro ? (
-              dayjs(convertFirebaseTimestamp(finanzas.fechaCobro)).format(
-                "DD/MM/YYYY"
-              )
-            ) : (
-              "-"
-            )}
-          </p>
-        </div>
+              </TextField>
+              <DateWrapper>
+                <DatePicker
+                  label="Fecha"
+                  value={dayjs(gastoEditando?.fecha)}
+                  onChange={(newValue: dayjs.Dayjs | null) =>
+                    setGastoEditando((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            fecha: newValue ? newValue.toISOString() : "",
+                          }
+                        : prev
+                    )
+                  }
+                  sx={{ marginBottom: "1rem", width: "100%" }}
+                />
+              </DateWrapper>
+            </DialogContent>
+            <DialogActions>
+              <button
+                className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none "
+                onClick={() => setEditModalOpen(false)}
+              >
+                <span className=" text-sm font-bold">Cancelar</span>
+              </button>
+              <button
+                className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none"
+                onClick={() => gastoEditando && handleEditGasto(gastoEditando)}
+              >
+                <span className=" text-sm font-bold">Guardar Cambios</span>
+              </button>{" "}
+            </DialogActions>
+          </Dialog>
+        </>
+      )}
 
-        <div className="w-full max-w-lg bg-gray-900 text-white shadow-md rounded-xl p-4 ">
-          <h6 className="text-xl font-bold text-yellow-400 m-0">Resumen</h6>
-          <p className="text-2xl m-0">
-            Disponible:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              formatCurrency(dineroDisponible)
-            )}
-          </p>
-          <p className="text-lg m-0">
-            Días restantes:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              diasCobro
-            )}
-          </p>
-          <p className="m-0">
-            Total Gastos Fijos:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              formatCurrency(totalGastosFijos)
-            )}
-          </p>
-          <p className="m-0">
-            Total Gastos Variables:{" "}
-            {loading ? (
-              <span className="w-full h-4 bg-gray-300 animate-pulse rounded-lg"></span>
-            ) : (
-              formatCurrency(totalGastosVariables)
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-8 space-y-4">
-        <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-7xl ">
-          <h6 className="text-xl font-bold text-gray-800 mb-4">
-            Transacciones de gastos variables
-          </h6>
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((_, index) => (
-                <div
-                  key={index}
-                  className="w-full h-20 bg-gray-300 animate-pulse rounded-lg"
-                ></div>
-              ))}
-            </div>
-          ) : finanzas?.gastosVariables?.length && user ? (
-            <div className="space-y-4">
-              {finanzas?.gastosVariables
-                .sort((a, b) => dayjs(b.fecha).diff(dayjs(a.fecha)))
-                .slice(0, numGastos)
-                .map((gasto, index) => (
-                  <div
-                    key={gasto.id}
-                    ref={index === numGastos - 1 ? lastGastoRef : null}
-                    className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-bold">{gasto.descripcion}</p>
-                      {gasto.categoria && (
-                        <p className="text-sm text-gray-700 font-medium">
-                          {gasto.categoria.nombre}
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-500">
-                        {dayjs(gasto.fecha).format("DD/MM/YYYY")}
-                      </p>
-                      <span className="text-red-500 font-bold">
-                        -{formatCurrency(gasto.monto)}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleOpenEditModal(gasto)}
-                        className="text-gray-900 hover:underline border-none bg-none rounded-full "
-                      >
-                        <Edit className="m-1 text-gray-900" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteExpense(gasto.id)}
-                        className="text-red-500 hover:underline border-none bg-none rounded-full "
-                      >
-                        <DeleteRounded className="m-1" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No hay transacciones</p>
-          )}
-        </div>
-      </div>
-
-      <Dialog
-        open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        fullWidth
-        maxWidth="sm"
-        slotProps={{ paper: { sx: { borderRadius: "24px" } } }}
-      >
-        <DialogTitle>Editar Gasto</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Descripción"
-            fullWidth
-            defaultValue={gastoEditando?.descripcion}
-            onChange={(e) =>
-              setGastoEditando((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      descripcion: e.target.value,
-                    }
-                  : prev
-              )
-            }
-            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
-          />{" "}
-          <TextField
-            label="Monto"
-            type="number"
-            fullWidth
-            defaultValue={gastoEditando?.monto}
-            onChange={(e) =>
-              setGastoEditando((prev) =>
-                prev ? { ...prev, monto: Number(e.target.value) } : prev
-              )
-            }
-            sx={{ marginBottom: "1rem", marginTop: "1rem" }}
-          />
-          <TextField
-            select
-            label="Categoría"
-            fullWidth
-            value={gastoEditando?.categoria?.id || ""}
-            onChange={(e) => {
-              const selectedCategoria = categorias.find(
-                (cat) => cat.id === e.target.value
-              );
-              setGastoEditando((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      categoria: selectedCategoria || {
-                        id: "",
-                        nombre: "",
-                        icono: "",
-                      },
-                    }
-                  : prev
-              );
-            }}
-            sx={{ marginBottom: "1rem" }}
-          >
-            {" "}
-            {categorias.map((categoria) => (
-              <MenuItem key={categoria.id} value={categoria.id}>
-                <span>{categoria.nombre}</span>
-              </MenuItem>
-            ))}
-          </TextField>
-          <DateWrapper>
-            <DatePicker
-              label="Fecha"
-              value={dayjs(gastoEditando?.fecha)}
-              onChange={(newValue: dayjs.Dayjs | null) =>
-                setGastoEditando((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        fecha: newValue ? newValue.toISOString() : "",
-                      }
-                    : prev
-                )
-              }
-              sx={{ marginBottom: "1rem", width: "100%" }}
-            />
-          </DateWrapper>
-        </DialogContent>
-        <DialogActions>
-          <button
-            className="flex items-center gap-2 px-6 py-3 text-white bg-red-500 rounded-full shadow-sm hover:bg-red-800 border-none "
-            onClick={() => setEditModalOpen(false)}
-          >
-            <span className=" text-sm font-bold">Cancelar</span>
-          </button>
-          <button
-            className="flex items-center gap-2 px-6 py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 transition-all duration-300 border-none"
-            onClick={() => gastoEditando && handleEditGasto(gastoEditando)}
-          >
-            <span className=" text-sm font-bold">Guardar Cambios</span>
-          </button>
-        </DialogActions>
-      </Dialog>
       <AgregarGastos
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onGastoAgregado={handleGastoAgregado}
         periodo={periodo}
+      />
+
+      <WelcomeMessage
+        open={showWelcome}
+        onClose={handleWelcomeClose}
+        onComplete={handleWelcomeComplete}
       />
     </div>
   );
