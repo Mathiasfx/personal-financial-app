@@ -17,7 +17,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/lib/useToast";
 import { createPeriod } from "@/lib/finanzasService";
-import { Timestamp } from "firebase/firestore";
+import { dayjsToFirebaseTimestamp } from "@/lib/utils";
 import DateWrapper from "./DateWrapper";
 import {
   InfoOutlined,
@@ -72,18 +72,14 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
       toast.showWarning("Por favor ingresa tus ingresos mensuales");
       return;
     }
-
     setLoading(true);
     try {
       const currentMonth = dayjs().format("YYYY-MM");
-
       const dataToSave = {
         ingresos: formData.ingresos,
         ingresosExtras: formData.ingresosExtras,
         inversiones: formData.inversiones,
-        fechaCobro: formData.fechaCobro
-          ? Timestamp.fromDate(formData.fechaCobro.toDate())
-          : null,
+        fechaCobro: dayjsToFirebaseTimestamp(formData.fechaCobro),
       };
 
       await createPeriod(user.uid, currentMonth, dataToSave);
