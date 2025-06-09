@@ -16,6 +16,7 @@ import {
   ExitToApp,
   Category,
   MonetizationOn,
+  BarChart,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -136,7 +137,7 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                   )}
                 </ListItemButton>
               </Tooltip>
-            </ListItem>
+            </ListItem>{" "}
             <ListItem disablePadding>
               <Tooltip title="Gastos Fijos" placement="right">
                 <ListItemButton
@@ -146,6 +147,21 @@ const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                   {open && (
                     <ListItemText
                       primary="Gastos Fijos"
+                      sx={{ marginLeft: "8px" }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem disablePadding>
+              <Tooltip title="Estadísticas" placement="right">
+                <ListItemButton
+                  onClick={() => navigateTo("/dashboard/estadisticas")}
+                >
+                  <BarChart />
+                  {open && (
+                    <ListItemText
+                      primary="Estadísticas"
                       sx={{ marginLeft: "8px" }}
                     />
                   )}
