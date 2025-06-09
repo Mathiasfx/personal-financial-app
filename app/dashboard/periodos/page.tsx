@@ -205,10 +205,10 @@ export default function PeriodosAdminPage() {
         </div>
 
         <button
-          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300 mb-2"
+          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300   mb-2"
           onClick={handleOpenCreate}
         >
-          <span className="text-lg font-bold">Crear Nuevo Período</span>
+          <span className="text-lg font-medium">+ Nuevo Período</span>
         </button>
       </div>
 

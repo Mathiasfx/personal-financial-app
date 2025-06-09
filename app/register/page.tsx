@@ -7,6 +7,7 @@ import { useToast } from "@/lib/useToast";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import imagepreview from "../../public/images/dashboard_preview.png";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -156,10 +157,10 @@ export default function RegisterPage() {
           </h5>
 
           <Image
-            src="/images/dashboard-preview.png"
+            src={imagepreview}
             alt="Dashboard Preview"
-            width={100}
-            height={100}
+            width={700}
+            height={200}
             className="w-full max-w-xs rounded-lg shadow-lg"
           />
         </div>

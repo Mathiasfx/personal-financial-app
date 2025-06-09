@@ -31,7 +31,6 @@ import {
   School,
 } from "@mui/icons-material";
 
-
 export default function CategoriasPage() {
   const iconMap: { [key: string]: JSX.Element } = useMemo(
     () => ({
@@ -76,14 +75,13 @@ export default function CategoriasPage() {
     }
   }, [user, toast]);
 
-
   const paginatedCategories = useMemo(
     () =>
       categorias.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [categorias, page, rowsPerPage]
   );
   //#region Agregar Categoría
-    const handleAddCategory = useCallback(async () => {
+  const handleAddCategory = useCallback(async () => {
     if (user && nuevaCategoria.trim()) {
       try {
         const newCategory = { nombre: nuevaCategoria, icono: nuevoIcono };
@@ -101,7 +99,7 @@ export default function CategoriasPage() {
     }
   }, [user, nuevaCategoria, nuevoIcono, toast]);
   //#endregion
-  
+
   //#region Eliminar Categoría
   const handleDeleteCategory = useCallback(
     async (categoryId: string) => {
@@ -118,8 +116,7 @@ export default function CategoriasPage() {
     },
     [user, toast]
   );
-   //#endregion
-
+  //#endregion
 
   //#region Editar Categoría
   const handleEditCategory = (
@@ -161,7 +158,7 @@ export default function CategoriasPage() {
     }
   };
   //#endregion
-  
+
   //#region Paginación
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -294,9 +291,6 @@ export default function CategoriasPage() {
                       <div>
                         <p className="text-lg font-bold text-gray-800">
                           {categoria.nombre}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Icono: {categoria.icono}
                         </p>
                       </div>
                     )}
