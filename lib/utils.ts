@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import dayjs from 'dayjs';
 import { GastoFijo } from "@/models/gasto.model";
+import { Timestamp } from "firebase/firestore/lite";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,4 +31,40 @@ export function getPreviousPeriod(yearMonth: string): string {
 
 export function sumaGastoFijoTotal(costos:GastoFijo[]):number {
   return costos.reduce((total, costo) => total + costo.monto, 0);
+}
+
+/**
+ * Convierte un objeto Dayjs a Timestamp de Firebase de manera segura
+ * @param dayjsDate - Objeto Dayjs que se quiere convertir
+ * @returns Timestamp de Firebase o null si la fecha no es válida
+ */
+export function dayjsToFirebaseTimestamp(dayjsDate: dayjs.Dayjs | null): Timestamp | null {
+  if (!dayjsDate || !dayjsDate.isValid()) {
+    return null;
+  }
+  
+  try {
+    return Timestamp.fromDate(dayjsDate.toDate());
+  } catch (error) {
+    console.error('Error converting Dayjs to Firebase Timestamp:', error);
+    return null;
+  }
+}
+
+/**
+ * Convierte un objeto Dayjs a Date de JavaScript de manera segura
+ * @param dayjsDate - Objeto Dayjs que se quiere convertir
+ * @returns Date de JavaScript o null si la fecha no es válida
+ */
+export function dayjsToDate(dayjsDate: dayjs.Dayjs | null): Date | null {
+  if (!dayjsDate || !dayjsDate.isValid()) {
+    return null;
+  }
+  
+  try {
+    return dayjsDate.toDate();
+  } catch (error) {
+    console.error('Error converting Dayjs to Date:', error);
+    return null;
+  }
 }

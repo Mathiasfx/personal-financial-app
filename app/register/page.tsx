@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/lib/useToast";
+import { createDefaultCategories } from "@/lib/finanzasService";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -53,13 +54,22 @@ export default function RegisterPage() {
       toast.showError("Las contraseñas no coinciden");
       return;
     }
-
     try {
       const useCredential: any = await register(form.email, form.password);
       const user = useCredential.user;
       await updateProfile(user, {
         displayName: form.nombre,
       });
+
+      // Crear categorías por defecto para el nuevo usuario
+      try {
+        await createDefaultCategories(user.uid);
+        console.log("✅ Categorías por defecto creadas para el nuevo usuario");
+      } catch (categoryError) {
+        console.warn("⚠️ Error creando categorías por defecto:", categoryError);
+        // No fallar el registro si las categorías no se pueden crear
+      }
+
       toast.showSuccess("¡Registro exitoso! Bienvenido a la aplicación");
       router.push("/dashboard");
     } catch (err: any) {

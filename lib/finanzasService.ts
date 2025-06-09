@@ -12,7 +12,7 @@ import dayjs from "dayjs";
  * Mantiene el mismo día pero cambia el año-mes
  */
 function updateDateToNewMonth(
-  fechaVencimiento: Date | { seconds: number; nanoseconds: number } | string, 
+  fechaVencimiento: Date | { seconds: number; nanoseconds: number } | any, 
   newYearMonth: string
 ): Date {
   try {
@@ -495,8 +495,31 @@ export const deleteFixedExpense = async (userId: string, periodo: string, descri
     await deleteDoc(categoryRef);
   };
 
+  /**
+   * Crea categorías básicas por defecto para un nuevo usuario
+   */
+  export const createDefaultCategories = async (userId: string) => {
+    const defaultCategories = [
+      { nombre: "Supermercado", icono: "ShoppingCart" },
+      { nombre: "Transporte", icono: "DirectionsCar" },
+      { nombre: "Comida", icono: "Fastfood" },
+      { nombre: "Entretenimiento", icono: "Movie" },
+      { nombre: "Salud", icono: "LocalHospital" },
+      { nombre: "Hogar", icono: "Home" }
+    ];
 
+    try {
+      // Crear todas las categorías en paralelo
+      const categoryPromises = defaultCategories.map(category => 
+        addCategory(userId, category)
+      );
+      
+      await Promise.all(categoryPromises);
+      console.log("✅ Categorías por defecto creadas exitosamente");
+    } catch (error) {
+      console.error("❌ Error creando categorías por defecto:", error);
+      throw error;
+    }
+  };
 
-  
   //#endregion
-  

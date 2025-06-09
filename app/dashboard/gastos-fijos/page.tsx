@@ -24,7 +24,7 @@ import { MenuItem, Switch } from "@mui/material";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { formatCurrency, sumaGastoFijoTotal } from "@/lib/utils";
+import { formatCurrency, sumaGastoFijoTotal, dayjsToDate } from "@/lib/utils";
 import { Finanzas } from "@/models/finanzas.model";
 import { Categorias } from "@/models/categorias.model";
 
@@ -492,7 +492,7 @@ export default function GastosFijosPage() {
               onChange={(newValue) => {
                 setNuevoGasto({
                   ...nuevoGasto,
-                  fechaVencimiento: newValue ? newValue.toDate() : undefined,
+                  fechaVencimiento: dayjsToDate(newValue) || undefined,
                 });
               }}
               sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
@@ -615,12 +615,13 @@ export default function GastosFijosPage() {
                     : null
                 }
                 onChange={(newValue) => {
-                  if (newValue) {
+                  const newDate = dayjsToDate(newValue);
+                  if (newDate) {
                     setGastoEditando((prev) =>
                       prev
                         ? {
                             ...prev,
-                            fechaVencimiento: newValue.toDate(),
+                            fechaVencimiento: newDate,
                           }
                         : null
                     );
@@ -650,4 +651,3 @@ export default function GastosFijosPage() {
     </div>
   );
 }
-

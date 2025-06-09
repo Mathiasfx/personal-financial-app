@@ -12,7 +12,7 @@ import {
 } from "@/lib/finanzasService";
 import dayjs, { Dayjs } from "dayjs";
 import { Finanzas } from "@/models/finanzas.model";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, dayjsToFirebaseTimestamp } from "@/lib/utils";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import {
@@ -22,7 +22,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import { Timestamp } from "firebase/firestore/lite";
 import { DeleteRounded, Edit } from "@mui/icons-material";
 
 // Helper function to convert Firebase Timestamp to Date for dayjs
@@ -150,7 +149,7 @@ export default function PeriodosAdminPage() {
         ingresos,
         ingresosExtras,
         inversiones,
-        fechaCobro: fechaCobro ? Timestamp.fromDate(fechaCobro.toDate()) : null,
+        fechaCobro: dayjsToFirebaseTimestamp(fechaCobro),
       };
 
       // CREAR
