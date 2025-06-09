@@ -12,7 +12,7 @@ import dayjs from "dayjs";
  * Mantiene el mismo día pero cambia el año-mes
  */
 function updateDateToNewMonth(
-  fechaVencimiento: Date | { seconds: number; nanoseconds: number } | any, 
+  fechaVencimiento: Date | { seconds: number; nanoseconds: number } | string, 
   newYearMonth: string
 ): Date {
   try {
@@ -21,9 +21,9 @@ function updateDateToNewMonth(
     // Manejar diferentes tipos de fecha (Date, Timestamp de Firestore, etc.)
     if (fechaVencimiento instanceof Date) {
       originalDate = dayjs(fechaVencimiento);
-    } else if (fechaVencimiento?.seconds) {
+    } else if (typeof fechaVencimiento === 'object' && fechaVencimiento !== null && 'seconds' in fechaVencimiento) {
       // Timestamp de Firestore
-      originalDate = dayjs(fechaVencimiento.seconds * 1000);
+      originalDate = dayjs((fechaVencimiento as { seconds: number }).seconds * 1000);
     } else if (typeof fechaVencimiento === 'string') {
       originalDate = dayjs(fechaVencimiento);
     } else {

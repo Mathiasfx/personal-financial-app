@@ -132,8 +132,6 @@ export default function Dashboard() {
         }
 
         // Ordenamos los IDs (opcional)
-        ids.sort(); // Solo agregar el mes actual al select si NO es usuario nuevo
-        // Para usuarios nuevos, la lista debe estar vacía hasta que completen el wizard
         if (!isUserNew) {
           const current = dayjs().format("YYYY-MM");
           if (!ids.includes(current)) {
