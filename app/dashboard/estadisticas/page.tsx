@@ -5,16 +5,16 @@ import { useToast } from "@/lib/useToast";
 import { listAllPeriods } from "@/lib/finanzasService";
 import { Finanzas } from "@/models/finanzas.model";
 import {
-  processCategoryData,
-  processTrendData,
+  //processCategoryData,
+  //processTrendData,
   processFixedExpenseIncreaseData,
   PeriodData,
 } from "@/lib/statisticsService";
 import ChartContainer from "./components/ChartContainer";
 import InflationLineChart from "./components/InflationLineChart";
-import CategoryDistributionChart from "./components/CategoryDistributionChart";
-import AvailableMoneyTrendChart from "./components/AvailableMoneyTrendChart";
-import FixedVsVariableExpensesChart from "./components/FixedVsVariableExpensesChart";
+//import CategoryDistributionChart from "./components/CategoryDistributionChart";
+//import AvailableMoneyTrendChart from "./components/AvailableMoneyTrendChart";
+//import FixedVsVariableExpensesChart from "./components/FixedVsVariableExpensesChart";
 import KeyMetrics from "./components/KeyMetrics";
 import TrendIndicator from "./components/TrendIndicator";
 
@@ -65,8 +65,8 @@ export default function EstadisticasPage() {
   // Procesar datos para los gráficos
   const fixedExpenseIncreaseData =
     processFixedExpenseIncreaseData(filteredData);
-  const categoryData = processCategoryData(filteredData);
-  const trendData = processTrendData(filteredData);
+  //const categoryData = processCategoryData(filteredData);
+  //const trendData = processTrendData(filteredData);
 
   return (
     <div className="p-0 md:p-6 w-full max-w-7xl">
