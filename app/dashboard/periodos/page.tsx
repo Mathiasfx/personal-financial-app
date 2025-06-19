@@ -313,48 +313,59 @@ export default function PeriodosAdminPage() {
                 sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
               />
             </DateWrapper>
-
-            {/* Ingresos */}
+            {/* Ingresos */}{" "}
             <TextField
               label="Ingresos"
-              type="number"
+              type="text"
+              inputMode="decimal"
               fullWidth
-              value={formState.ingresos}
-              onChange={(e) =>
-                setFormState({ ...formState, ingresos: Number(e.target.value) })
-              }
+              value={formState.ingresos === 0 ? "" : formState.ingresos}
+              onChange={(e) => {
+                let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                rawValue = rawValue.replace(",", ".");
+                setFormState({
+                  ...formState,
+                  ingresos: rawValue === "" ? 0 : Number(rawValue),
+                });
+              }}
               sx={{ marginBottom: "1rem", marginTop: "1rem" }}
             />
-
-            {/* Inversiones */}
+            {/* Inversiones */}{" "}
             <TextField
               label="Inversiones"
-              type="number"
+              type="text"
+              inputMode="decimal"
               fullWidth
-              value={formState.inversiones}
-              onChange={(e) =>
+              value={formState.inversiones === 0 ? "" : formState.inversiones}
+              onChange={(e) => {
+                let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                rawValue = rawValue.replace(",", ".");
                 setFormState({
                   ...formState,
-                  inversiones: Number(e.target.value),
-                })
-              }
+                  inversiones: rawValue === "" ? 0 : Number(rawValue),
+                });
+              }}
               sx={{ marginBottom: "1rem" }}
             />
-            {/* Igresos extras */}
+            {/* Igresos extras */}{" "}
             <TextField
               label="Ingresos Extras"
-              type="number"
+              type="text"
+              inputMode="decimal"
               fullWidth
-              value={formState.ingresosExtras}
-              onChange={(e) =>
+              value={
+                formState.ingresosExtras === 0 ? "" : formState.ingresosExtras
+              }
+              onChange={(e) => {
+                let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                rawValue = rawValue.replace(",", ".");
                 setFormState({
                   ...formState,
-                  ingresosExtras: Number(e.target.value),
-                })
-              }
+                  ingresosExtras: rawValue === "" ? 0 : Number(rawValue),
+                });
+              }}
               sx={{ marginBottom: "1rem" }}
             />
-
             {/* Fecha Cobro */}
             <DateWrapper>
               <DatePicker

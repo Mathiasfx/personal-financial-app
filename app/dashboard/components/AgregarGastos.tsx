@@ -106,13 +106,19 @@ const AgregarGastos = ({
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           sx={{ marginBottom: "1rem", marginTop: "1rem" }}
-        />
+        />{" "}
         <TextField
           label="Monto"
-          type="number"
+          type="text"
+          inputMode="decimal"
           fullWidth
           value={monto}
-          onChange={(e) => setMonto(e.target.value)}
+          onChange={(e) => {
+            // Permitir valores vacíos o entrada numérica con punto decimal
+            let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+            rawValue = rawValue.replace(",", ".");
+            setMonto(rawValue);
+          }}
           sx={{ marginBottom: "1rem", marginTop: "1rem" }}
         />
         <DateWrapper>
@@ -127,7 +133,6 @@ const AgregarGastos = ({
             sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
           />
         </DateWrapper>
-
         <TextField
           select
           label="Categoría"

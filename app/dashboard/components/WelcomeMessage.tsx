@@ -186,55 +186,65 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
             </Typography>
 
             <div className="space-y-4">
+              {" "}
               <TextField
                 label="Ingresos Mensuales *"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 fullWidth
-                value={formData.ingresos}
-                onChange={(e) =>
+                value={formData.ingresos === 0 ? "" : formData.ingresos}
+                onChange={(e) => {
+                  let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                  rawValue = rawValue.replace(",", ".");
                   setFormData({
                     ...formData,
-                    ingresos: Number(e.target.value),
-                  })
-                }
+                    ingresos: rawValue === "" ? 0 : Number(rawValue),
+                  });
+                }}
                 helperText="Tu sueldo u ingresos principales del mes"
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
                   },
                 }}
-              />
-
+              />{" "}
               <TextField
                 label="Ingresos Extras"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 fullWidth
-                value={formData.ingresosExtras}
-                onChange={(e) =>
+                value={
+                  formData.ingresosExtras === 0 ? "" : formData.ingresosExtras
+                }
+                onChange={(e) => {
+                  let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                  rawValue = rawValue.replace(",", ".");
                   setFormData({
                     ...formData,
-                    ingresosExtras: Number(e.target.value),
-                  })
-                }
+                    ingresosExtras: rawValue === "" ? 0 : Number(rawValue),
+                  });
+                }}
                 helperText="Trabajos extra, bonos, etc. (opcional)"
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
                   },
                 }}
-              />
-
+              />{" "}
               <TextField
                 label="Inversiones/Ahorros"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 fullWidth
-                value={formData.inversiones}
-                onChange={(e) =>
+                value={formData.inversiones === 0 ? "" : formData.inversiones}
+                onChange={(e) => {
+                  let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                  rawValue = rawValue.replace(",", ".");
                   setFormData({
                     ...formData,
-                    inversiones: Number(e.target.value),
-                  })
-                }
+                    inversiones: rawValue === "" ? 0 : Number(rawValue),
+                  });
+                }}
                 helperText="Dinero que destinas a inversiones o ahorros (opcional)"
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -242,7 +252,6 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
                   },
                 }}
               />
-
               <DateWrapper>
                 <DatePicker
                   label="Fecha de tu próximo cobro"
