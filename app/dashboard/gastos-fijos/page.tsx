@@ -428,7 +428,7 @@ export default function GastosFijosPage() {
             inputMode="decimal"
             type="text"
             fullWidth
-            value={nuevoGasto.monto.toString()}
+            value={nuevoGasto.monto === 0 ? "" : nuevoGasto.monto.toString()}
             onChange={(e) => {
               let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
               rawValue = rawValue.replace(",", ".");
@@ -436,12 +436,6 @@ export default function GastosFijosPage() {
                 ...nuevoGasto,
                 monto: rawValue === "" ? 0 : parseFloat(rawValue) || 0,
               });
-            }}
-            onBlur={() => {
-              setNuevoGasto((prev) => ({
-                ...prev,
-                monto: prev.monto ? Number(prev.monto) : 0,
-              }));
             }}
             sx={{ marginBottom: "1rem" }}
           />
@@ -532,13 +526,15 @@ export default function GastosFijosPage() {
             value={gastoEditando?.descripcion}
             disabled
             sx={{ marginTop: "1rem" }}
-          ></TextField>
+          ></TextField>{" "}
           <TextField
             label="Monto"
             inputMode="decimal"
             type="text"
             fullWidth
-            value={gastoEditando?.monto ? gastoEditando.monto.toString() : ""}
+            value={
+              gastoEditando?.monto === 0 ? "" : gastoEditando?.monto.toString()
+            }
             onChange={(e) => {
               let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
               rawValue = rawValue.replace(",", ".");
@@ -547,16 +543,6 @@ export default function GastosFijosPage() {
                   ? {
                       ...prev,
                       monto: rawValue === "" ? 0 : parseFloat(rawValue) || 0,
-                    }
-                  : null
-              );
-            }}
-            onBlur={() => {
-              setGastoEditando((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      monto: prev.monto ? Number(prev.monto) : 0,
                     }
                   : null
               );
@@ -595,7 +581,6 @@ export default function GastosFijosPage() {
               <MenuItem disabled>Cargando categorías...</MenuItem>
             )}
           </TextField>
-
           <DateWrapper>
             {gastoEditando && (
               <DatePicker
