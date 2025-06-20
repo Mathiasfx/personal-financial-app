@@ -15,7 +15,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import { SelectChangeEvent } from "@mui/material/Select";
-import { Edit, Delete, Save } from "@mui/icons-material";
+import { Edit, Delete, Save, HelpOutline } from "@mui/icons-material";
 import {
   ShoppingCart,
   DirectionsCar,
@@ -29,28 +29,130 @@ import {
   Restaurant,
   Work,
   School,
+  ShoppingBag,
+  LocalGasStation,
+  ElectricalServices,
+  WaterDrop,
+  Wifi,
+  MedicalServices,
+  LocalPharmacy,
+  TheaterComedy,
+  MusicNote,
+  Nightlight,
+  SportsEsports,
+  AttachMoney,
+  CreditCard,
+  Receipt,
+  AccountBalance,
+  Savings,
+  AccountBalanceWallet,
+  Pets,
+  ChildCare,
+  Spa,
+  Celebration,
+  Cake,
+  PhoneAndroid,
+  Laptop,
+  DevicesOther,
+  Public,
+  BeachAccess,
+  Park,
+  Hotel,
+  Train,
+  DirectionsBus,
+  LocalTaxi,
+  TwoWheeler,
+  Brush,
+  LibraryBooks,
+  LocalLaundryService,
+  CleaningServices,
+  Favorite,
 } from "@mui/icons-material";
 
 export default function CategoriasPage() {
   const iconMap: { [key: string]: JSX.Element } = useMemo(
     () => ({
+      // Categoría especial para elementos eliminados
+      QuestionMark: <HelpOutline />,
+
+      // Compras y Gastos Diarios
       ShoppingCart: <ShoppingCart />,
-      DirectionsCar: <DirectionsCar />,
-      Fastfood: <Fastfood />,
-      Movie: <Movie />,
-      FitnessCenter: <FitnessCenter />,
-      LocalHospital: <LocalHospital />,
-      Home: <Home />,
-      Flight: <Flight />,
-      SportsSoccer: <SportsSoccer />,
+      ShoppingBag: <ShoppingBag />,
       Restaurant: <Restaurant />,
+      Fastfood: <Fastfood />,
+
+      // Transporte
+      DirectionsCar: <DirectionsCar />,
+      LocalGasStation: <LocalGasStation />,
+      Flight: <Flight />,
+      Train: <Train />,
+      DirectionsBus: <DirectionsBus />,
+      LocalTaxi: <LocalTaxi />,
+      TwoWheeler: <TwoWheeler />,
+
+      // Hogar y Servicios
+      Home: <Home />,
+      ElectricalServices: <ElectricalServices />,
+      WaterDrop: <WaterDrop />,
+      Wifi: <Wifi />,
+      LocalLaundryService: <LocalLaundryService />,
+      CleaningServices: <CleaningServices />,
+
+      // Salud y Bienestar
+      LocalHospital: <LocalHospital />,
+      MedicalServices: <MedicalServices />,
+      LocalPharmacy: <LocalPharmacy />,
+      FitnessCenter: <FitnessCenter />,
+      Spa: <Spa />,
+
+      // Entretenimiento y Ocio
+      Movie: <Movie />,
+      TheaterComedy: <TheaterComedy />,
+      MusicNote: <MusicNote />,
+      Nightclub: <Nightlight />,
+      SportsEsports: <SportsEsports />,
+      SportsSoccer: <SportsSoccer />,
+
+      // Finanzas y Pagos
+      AttachMoney: <AttachMoney />,
+      CreditCard: <CreditCard />,
+      Receipt: <Receipt />,
+      AccountBalance: <AccountBalance />,
+      Savings: <Savings />,
+      AccountBalanceWallet: <AccountBalanceWallet />,
+
+      // Trabajo y Educación
       Work: <Work />,
       School: <School />,
+      LibraryBooks: <LibraryBooks />,
+
+      // Viajes y Turismo
+      Hotel: <Hotel />,
+      BeachAccess: <BeachAccess />,
+      Public: <Public />,
+      Park: <Park />,
+
+      // Tecnología
+      PhoneAndroid: <PhoneAndroid />,
+      Laptop: <Laptop />,
+      DevicesOther: <DevicesOther />,
+
+      // Eventos y Celebraciones
+      Celebration: <Celebration />,
+      Cake: <Cake />,
+
+      // Mascotas y Familia
+      Pets: <Pets />,
+      ChildCare: <ChildCare />, // Arte y Creatividad
+      Brush: <Brush />,
+
+      // Personal
+      Favorite: <Favorite />,
     }),
     []
   );
 
-  const iconOptions = useMemo(() => Object.keys(iconMap), [iconMap]);
+  // Eliminamos la variable iconOptions ya que ahora estamos usando los menús directamente
 
   const { user } = useAuth();
   const toast = useToast();
@@ -190,12 +292,20 @@ export default function CategoriasPage() {
             },
           }}
           onChange={(e) => setNuevaCategoria(e.target.value)}
-        />
+        />{" "}
         <Select
           labelId="icon-label"
           label="Icono"
           value={nuevoIcono}
           onChange={handleIconChange}
+          MenuProps={{
+            PaperProps: {
+              style: {
+                maxHeight: 300,
+                width: 280,
+              },
+            },
+          }}
           sx={{
             borderRadius: "24px",
             "& .MuiOutlinedInput-notchedOutline": {
@@ -203,11 +313,75 @@ export default function CategoriasPage() {
             },
           }}
         >
-          {iconOptions.map((icon: string) => (
-            <MenuItem key={icon} value={icon}>
-              {iconMap[icon]}
-            </MenuItem>
-          ))}
+          <MenuItem disabled>Compras y Gastos Diarios</MenuItem>
+          <MenuItem value="ShoppingCart">{iconMap.ShoppingCart}</MenuItem>
+          <MenuItem value="ShoppingBag">{iconMap.ShoppingBag}</MenuItem>
+          <MenuItem value="Restaurant">{iconMap.Restaurant}</MenuItem>
+          <MenuItem value="Fastfood">{iconMap.Fastfood}</MenuItem>
+          <MenuItem disabled>Transporte</MenuItem>
+          <MenuItem value="DirectionsCar">{iconMap.DirectionsCar}</MenuItem>
+          <MenuItem value="LocalGasStation">{iconMap.LocalGasStation}</MenuItem>
+          <MenuItem value="Flight">{iconMap.Flight}</MenuItem>
+          <MenuItem value="Train">{iconMap.Train}</MenuItem>
+          <MenuItem value="DirectionsBus">{iconMap.DirectionsBus}</MenuItem>
+          <MenuItem value="LocalTaxi">{iconMap.LocalTaxi}</MenuItem>
+          <MenuItem value="TwoWheeler">{iconMap.TwoWheeler}</MenuItem>
+          <MenuItem disabled>Hogar y Servicios</MenuItem>
+          <MenuItem value="Home">{iconMap.Home}</MenuItem>
+          <MenuItem value="ElectricalServices">
+            {iconMap.ElectricalServices}
+          </MenuItem>
+          <MenuItem value="WaterDrop">{iconMap.WaterDrop}</MenuItem>
+          <MenuItem value="Wifi">{iconMap.Wifi}</MenuItem>
+          <MenuItem value="LocalLaundryService">
+            {iconMap.LocalLaundryService}
+          </MenuItem>
+          <MenuItem value="CleaningServices">
+            {iconMap.CleaningServices}
+          </MenuItem>
+          <MenuItem disabled>Salud y Bienestar</MenuItem>
+          <MenuItem value="LocalHospital">{iconMap.LocalHospital}</MenuItem>
+          <MenuItem value="MedicalServices">{iconMap.MedicalServices}</MenuItem>
+          <MenuItem value="LocalPharmacy">{iconMap.LocalPharmacy}</MenuItem>
+          <MenuItem value="FitnessCenter">{iconMap.FitnessCenter}</MenuItem>
+          <MenuItem value="Spa">{iconMap.Spa}</MenuItem>
+          <MenuItem disabled>Entretenimiento</MenuItem>
+          <MenuItem value="Movie">{iconMap.Movie}</MenuItem>
+          <MenuItem value="TheaterComedy">{iconMap.TheaterComedy}</MenuItem>
+          <MenuItem value="SportsSoccer">{iconMap.SportsSoccer}</MenuItem>
+          <MenuItem value="SportsEsports">{iconMap.SportsEsports}</MenuItem>
+          <MenuItem value="MusicNote">{iconMap.MusicNote}</MenuItem>
+          <MenuItem value="Nightclub">{iconMap.Nightclub}</MenuItem>
+          <MenuItem disabled>Finanzas</MenuItem>
+          <MenuItem value="AttachMoney">{iconMap.AttachMoney}</MenuItem>
+          <MenuItem value="CreditCard">{iconMap.CreditCard}</MenuItem>
+          <MenuItem value="Receipt">{iconMap.Receipt}</MenuItem>
+          <MenuItem value="AccountBalance">{iconMap.AccountBalance}</MenuItem>
+          <MenuItem value="Savings">{iconMap.Savings}</MenuItem>
+          <MenuItem value="AccountBalanceWallet">
+            {iconMap.AccountBalanceWallet}
+          </MenuItem>
+          <MenuItem disabled>Trabajo y Educación</MenuItem>
+          <MenuItem value="Work">{iconMap.Work}</MenuItem>
+          <MenuItem value="School">{iconMap.School}</MenuItem>
+          <MenuItem value="LibraryBooks">{iconMap.LibraryBooks}</MenuItem>
+          <MenuItem disabled>Viajes y Turismo</MenuItem>
+          <MenuItem value="Hotel">{iconMap.Hotel}</MenuItem>
+          <MenuItem value="BeachAccess">{iconMap.BeachAccess}</MenuItem>
+          <MenuItem value="Public">{iconMap.Public}</MenuItem>
+          <MenuItem value="Park">{iconMap.Park}</MenuItem>
+          <MenuItem disabled>Tecnología</MenuItem>
+          <MenuItem value="PhoneAndroid">{iconMap.PhoneAndroid}</MenuItem>
+          <MenuItem value="Laptop">{iconMap.Laptop}</MenuItem>
+          <MenuItem value="DevicesOther">{iconMap.DevicesOther}</MenuItem>
+          <MenuItem disabled>Eventos y Otros</MenuItem>
+          <MenuItem value="Celebration">{iconMap.Celebration}</MenuItem>
+          <MenuItem value="Cake">{iconMap.Cake}</MenuItem>
+          <MenuItem value="Pets">{iconMap.Pets}</MenuItem>
+          <MenuItem value="ChildCare">{iconMap.ChildCare}</MenuItem>{" "}
+          <MenuItem value="Brush">{iconMap.Brush}</MenuItem>
+          <MenuItem disabled>Personal</MenuItem>
+          <MenuItem value="Favorite">{iconMap.Favorite}</MenuItem>
         </Select>
         <Button
           variant="contained"
@@ -239,10 +413,19 @@ export default function CategoriasPage() {
                         size="small"
                         sx={{ minWidth: 48, width: 48 }}
                       >
+                        {" "}
                         <Select
                           value={editIcon}
                           onChange={handleEditIconChange}
                           displayEmpty
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                maxHeight: 300,
+                                width: 280,
+                              },
+                            },
+                          }}
                           sx={{
                             width: 48,
                             height: 48,
@@ -263,13 +446,133 @@ export default function CategoriasPage() {
                             },
                           }}
                         >
-                          {iconOptions.map((icon) => (
-                            <MenuItem key={icon} value={icon}>
-                              <div className="flex items-center justify-center">
-                                {iconMap[icon]}
-                              </div>
-                            </MenuItem>
-                          ))}
+                          <MenuItem disabled>Compras y Gastos Diarios</MenuItem>
+                          <MenuItem value="ShoppingCart">
+                            {iconMap.ShoppingCart}
+                          </MenuItem>
+                          <MenuItem value="ShoppingBag">
+                            {iconMap.ShoppingBag}
+                          </MenuItem>
+                          <MenuItem value="Restaurant">
+                            {iconMap.Restaurant}
+                          </MenuItem>
+                          <MenuItem value="Fastfood">
+                            {iconMap.Fastfood}
+                          </MenuItem>
+                          <MenuItem disabled>Transporte</MenuItem>
+                          <MenuItem value="DirectionsCar">
+                            {iconMap.DirectionsCar}
+                          </MenuItem>
+                          <MenuItem value="LocalGasStation">
+                            {iconMap.LocalGasStation}
+                          </MenuItem>
+                          <MenuItem value="Flight">{iconMap.Flight}</MenuItem>
+                          <MenuItem value="Train">{iconMap.Train}</MenuItem>
+                          <MenuItem value="DirectionsBus">
+                            {iconMap.DirectionsBus}
+                          </MenuItem>
+                          <MenuItem value="LocalTaxi">
+                            {iconMap.LocalTaxi}
+                          </MenuItem>
+                          <MenuItem value="TwoWheeler">
+                            {iconMap.TwoWheeler}
+                          </MenuItem>
+                          <MenuItem disabled>Hogar y Servicios</MenuItem>
+                          <MenuItem value="Home">{iconMap.Home}</MenuItem>
+                          <MenuItem value="ElectricalServices">
+                            {iconMap.ElectricalServices}
+                          </MenuItem>
+                          <MenuItem value="WaterDrop">
+                            {iconMap.WaterDrop}
+                          </MenuItem>
+                          <MenuItem value="Wifi">{iconMap.Wifi}</MenuItem>
+                          <MenuItem value="LocalLaundryService">
+                            {iconMap.LocalLaundryService}
+                          </MenuItem>
+                          <MenuItem value="CleaningServices">
+                            {iconMap.CleaningServices}
+                          </MenuItem>
+                          <MenuItem disabled>Salud y Bienestar</MenuItem>
+                          <MenuItem value="LocalHospital">
+                            {iconMap.LocalHospital}
+                          </MenuItem>
+                          <MenuItem value="MedicalServices">
+                            {iconMap.MedicalServices}
+                          </MenuItem>
+                          <MenuItem value="LocalPharmacy">
+                            {iconMap.LocalPharmacy}
+                          </MenuItem>
+                          <MenuItem value="FitnessCenter">
+                            {iconMap.FitnessCenter}
+                          </MenuItem>
+                          <MenuItem value="Spa">{iconMap.Spa}</MenuItem>
+                          <MenuItem disabled>Entretenimiento</MenuItem>
+                          <MenuItem value="Movie">{iconMap.Movie}</MenuItem>
+                          <MenuItem value="TheaterComedy">
+                            {iconMap.TheaterComedy}
+                          </MenuItem>
+                          <MenuItem value="SportsSoccer">
+                            {iconMap.SportsSoccer}
+                          </MenuItem>
+                          <MenuItem value="SportsEsports">
+                            {iconMap.SportsEsports}
+                          </MenuItem>
+                          <MenuItem value="MusicNote">
+                            {iconMap.MusicNote}
+                          </MenuItem>
+                          <MenuItem value="Nightclub">
+                            {iconMap.Nightclub}
+                          </MenuItem>
+                          <MenuItem disabled>Finanzas</MenuItem>
+                          <MenuItem value="AttachMoney">
+                            {iconMap.AttachMoney}
+                          </MenuItem>
+                          <MenuItem value="CreditCard">
+                            {iconMap.CreditCard}
+                          </MenuItem>
+                          <MenuItem value="Receipt">{iconMap.Receipt}</MenuItem>
+                          <MenuItem value="AccountBalance">
+                            {iconMap.AccountBalance}
+                          </MenuItem>
+                          <MenuItem value="Savings">{iconMap.Savings}</MenuItem>
+                          <MenuItem value="AccountBalanceWallet">
+                            {iconMap.AccountBalanceWallet}
+                          </MenuItem>
+                          <MenuItem disabled>Trabajo y Educación</MenuItem>
+                          <MenuItem value="Work">{iconMap.Work}</MenuItem>
+                          <MenuItem value="School">{iconMap.School}</MenuItem>
+                          <MenuItem value="LibraryBooks">
+                            {iconMap.LibraryBooks}
+                          </MenuItem>
+                          <MenuItem disabled>Viajes y Turismo</MenuItem>
+                          <MenuItem value="Hotel">{iconMap.Hotel}</MenuItem>
+                          <MenuItem value="BeachAccess">
+                            {iconMap.BeachAccess}
+                          </MenuItem>
+                          <MenuItem value="Public">{iconMap.Public}</MenuItem>
+                          <MenuItem value="Park">{iconMap.Park}</MenuItem>
+                          <MenuItem disabled>Tecnología</MenuItem>
+                          <MenuItem value="PhoneAndroid">
+                            {iconMap.PhoneAndroid}
+                          </MenuItem>
+                          <MenuItem value="Laptop">{iconMap.Laptop}</MenuItem>
+                          <MenuItem value="DevicesOther">
+                            {iconMap.DevicesOther}
+                          </MenuItem>
+                          <MenuItem disabled>Eventos y Otros</MenuItem>
+                          <MenuItem value="Celebration">
+                            {iconMap.Celebration}
+                          </MenuItem>
+                          <MenuItem value="Cake">{iconMap.Cake}</MenuItem>
+                          <MenuItem value="Pets">{iconMap.Pets}</MenuItem>
+                          <MenuItem value="ChildCare">
+                            {iconMap.ChildCare}
+                          </MenuItem>{" "}
+                          <MenuItem value="Brush">{iconMap.Brush}</MenuItem>
+                          <MenuItem disabled>Personal</MenuItem>
+                          <MenuItem value="Favorite">
+                            {iconMap.Favorite}
+                          </MenuItem>
                         </Select>
                       </FormControl>
                     ) : (
