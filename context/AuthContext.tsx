@@ -20,6 +20,7 @@ import {
   loginWithGoogle as googleSignIn,
   logout,
 } from "@/lib/authService";
+import { createDefaultCategories } from "@/lib/finanzasService";
 import Cookies from "js-cookie";
 
 interface AuthContextType {
@@ -53,15 +54,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, []);
-
   const loginWithGoogle = async () => {
     try {
       const result = await googleSignIn();
       if (!result.user) throw new Error("No se pudo obtener el usuario");
 
+      // Verificar si es un usuario nuevo (basado en el timestamp de creación)
+      const isNewUser =
+        result.user.metadata.creationTime ===
+        result.user.metadata.lastSignInTime;
+
       setUser(result.user);
       const token = await getIdToken(result.user);
       Cookies.set("token", token, { expires: 1 });
+
+      // Crear categorías por defecto para usuarios nuevos de Google
+      if (isNewUser) {
+        try {
+          await createDefaultCategories(result.user.uid);
+          console.log(
+            "✅ Categorías por defecto creadas para el nuevo usuario de Google"
+          );
+        } catch (categoryError) {
+          console.warn(
+            "⚠️ Error creando categorías por defecto:",
+            categoryError
+          );
+          // No fallar el login si las categorías no se pueden crear
+        }
+      }
     } catch (error) {
       console.error("Error en login con Google:", error);
     }

@@ -12,7 +12,7 @@ import {
 } from "@/lib/finanzasService";
 import dayjs, { Dayjs } from "dayjs";
 import { Finanzas } from "@/models/finanzas.model";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, dayjsToFirebaseTimestamp } from "@/lib/utils";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import {
@@ -22,7 +22,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import { Timestamp } from "firebase/firestore/lite";
 import { DeleteRounded, Edit } from "@mui/icons-material";
 
 // Helper function to convert Firebase Timestamp to Date for dayjs
@@ -150,7 +149,7 @@ export default function PeriodosAdminPage() {
         ingresos,
         ingresosExtras,
         inversiones,
-        fechaCobro: fechaCobro ? Timestamp.fromDate(fechaCobro.toDate()) : null,
+        fechaCobro: dayjsToFirebaseTimestamp(fechaCobro),
       };
 
       // CREAR
@@ -205,10 +204,10 @@ export default function PeriodosAdminPage() {
         </div>
 
         <button
-          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300 mb-2"
+          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300   mb-2"
           onClick={handleOpenCreate}
         >
-          <span className="text-lg font-bold">Crear Nuevo Período</span>
+          <span className="text-lg font-medium">+ Nuevo Período</span>
         </button>
       </div>
 
@@ -314,48 +313,59 @@ export default function PeriodosAdminPage() {
                 sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
               />
             </DateWrapper>
-
-            {/* Ingresos */}
+            {/* Ingresos */}{" "}
             <TextField
               label="Ingresos"
-              type="number"
+              type="text"
+              inputMode="decimal"
               fullWidth
-              value={formState.ingresos}
-              onChange={(e) =>
-                setFormState({ ...formState, ingresos: Number(e.target.value) })
-              }
+              value={formState.ingresos === 0 ? "" : formState.ingresos}
+              onChange={(e) => {
+                let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                rawValue = rawValue.replace(",", ".");
+                setFormState({
+                  ...formState,
+                  ingresos: rawValue === "" ? 0 : Number(rawValue),
+                });
+              }}
               sx={{ marginBottom: "1rem", marginTop: "1rem" }}
             />
-
-            {/* Inversiones */}
+            {/* Inversiones */}{" "}
             <TextField
               label="Inversiones"
-              type="number"
+              type="text"
+              inputMode="decimal"
               fullWidth
-              value={formState.inversiones}
-              onChange={(e) =>
+              value={formState.inversiones === 0 ? "" : formState.inversiones}
+              onChange={(e) => {
+                let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                rawValue = rawValue.replace(",", ".");
                 setFormState({
                   ...formState,
-                  inversiones: Number(e.target.value),
-                })
-              }
+                  inversiones: rawValue === "" ? 0 : Number(rawValue),
+                });
+              }}
               sx={{ marginBottom: "1rem" }}
             />
-            {/* Igresos extras */}
+            {/* Igresos extras */}{" "}
             <TextField
               label="Ingresos Extras"
-              type="number"
+              type="text"
+              inputMode="decimal"
               fullWidth
-              value={formState.ingresosExtras}
-              onChange={(e) =>
+              value={
+                formState.ingresosExtras === 0 ? "" : formState.ingresosExtras
+              }
+              onChange={(e) => {
+                let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
+                rawValue = rawValue.replace(",", ".");
                 setFormState({
                   ...formState,
-                  ingresosExtras: Number(e.target.value),
-                })
-              }
+                  ingresosExtras: rawValue === "" ? 0 : Number(rawValue),
+                });
+              }}
               sx={{ marginBottom: "1rem" }}
             />
-
             {/* Fecha Cobro */}
             <DateWrapper>
               <DatePicker

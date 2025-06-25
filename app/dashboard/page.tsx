@@ -23,7 +23,59 @@ import { Gasto } from "@/models/gasto.model";
 import { MenuItem } from "@mui/material";
 //import { getLatestFinancialPeriod } from "@/lib/finanzasService";
 import { formatCurrency } from "@/lib/utils";
-import { Edit, DeleteRounded } from "@mui/icons-material";
+import { Edit, DeleteRounded, HelpOutline } from "@mui/icons-material";
+import {
+  ShoppingCart,
+  DirectionsCar,
+  Fastfood,
+  Movie,
+  FitnessCenter,
+  LocalHospital,
+  Home,
+  Flight,
+  SportsSoccer,
+  Restaurant,
+  Work,
+  School,
+  ShoppingBag,
+  LocalGasStation,
+  ElectricalServices,
+  WaterDrop,
+  Wifi,
+  MedicalServices,
+  LocalPharmacy,
+  TheaterComedy,
+  MusicNote,
+  Nightlight,
+  SportsEsports,
+  AttachMoney,
+  CreditCard,
+  Receipt,
+  AccountBalance,
+  Savings,
+  AccountBalanceWallet,
+  Pets,
+  ChildCare,
+  Spa,
+  Celebration,
+  Cake,
+  PhoneAndroid,
+  Laptop,
+  DevicesOther,
+  Public,
+  BeachAccess,
+  Park,
+  Hotel,
+  Train,
+  DirectionsBus,
+  LocalTaxi,
+  TwoWheeler,
+  Brush,
+  LibraryBooks,
+  LocalLaundryService,
+  CleaningServices,
+  Favorite,
+} from "@mui/icons-material";
 import { deleteExpense } from "@/lib/finanzasService";
 import DateWrapper from "./components/DateWrapper";
 import AgregarGastos from "./components/AgregarGastos";
@@ -40,6 +92,141 @@ export default function Dashboard() {
     }
     return timestamp as string;
   };
+
+  // Function to render the appropriate icon based on the icon name
+  const renderIcon = (iconName: string) => {
+    switch (iconName) {
+      // Compras y Gastos Diarios
+      case "ShoppingCart":
+        return <ShoppingCart className="text-gray-700" />;
+      case "ShoppingBag":
+        return <ShoppingBag className="text-gray-700" />;
+      case "Restaurant":
+        return <Restaurant className="text-gray-700" />;
+      case "Fastfood":
+        return <Fastfood className="text-gray-700" />;
+
+      // Transporte
+      case "DirectionsCar":
+        return <DirectionsCar className="text-gray-700" />;
+      case "LocalGasStation":
+        return <LocalGasStation className="text-gray-700" />;
+      case "Flight":
+        return <Flight className="text-gray-700" />;
+      case "Train":
+        return <Train className="text-gray-700" />;
+      case "DirectionsBus":
+        return <DirectionsBus className="text-gray-700" />;
+      case "LocalTaxi":
+        return <LocalTaxi className="text-gray-700" />;
+      case "TwoWheeler":
+        return <TwoWheeler className="text-gray-700" />;
+
+      // Hogar y Servicios
+      case "Home":
+        return <Home className="text-gray-700" />;
+      case "ElectricalServices":
+        return <ElectricalServices className="text-gray-700" />;
+      case "WaterDrop":
+        return <WaterDrop className="text-gray-700" />;
+      case "Wifi":
+        return <Wifi className="text-gray-700" />;
+      case "LocalLaundryService":
+        return <LocalLaundryService className="text-gray-700" />;
+      case "CleaningServices":
+        return <CleaningServices className="text-gray-700" />;
+
+      // Salud y Bienestar
+      case "LocalHospital":
+        return <LocalHospital className="text-gray-700" />;
+      case "MedicalServices":
+        return <MedicalServices className="text-gray-700" />;
+      case "LocalPharmacy":
+        return <LocalPharmacy className="text-gray-700" />;
+      case "FitnessCenter":
+        return <FitnessCenter className="text-gray-700" />;
+      case "Spa":
+        return <Spa className="text-gray-700" />;
+
+      // Entretenimiento y Ocio
+      case "Movie":
+        return <Movie className="text-gray-700" />;
+      case "TheaterComedy":
+        return <TheaterComedy className="text-gray-700" />;
+      case "MusicNote":
+        return <MusicNote className="text-gray-700" />;
+      case "Nightclub":
+        return <Nightlight className="text-gray-700" />;
+      case "SportsEsports":
+        return <SportsEsports className="text-gray-700" />;
+      case "SportsSoccer":
+        return <SportsSoccer className="text-gray-700" />;
+
+      // Finanzas y Pagos
+      case "AttachMoney":
+        return <AttachMoney className="text-gray-700" />;
+      case "CreditCard":
+        return <CreditCard className="text-gray-700" />;
+      case "Receipt":
+        return <Receipt className="text-gray-700" />;
+      case "AccountBalance":
+        return <AccountBalance className="text-gray-700" />;
+      case "Savings":
+        return <Savings className="text-gray-700" />;
+      case "AccountBalanceWallet":
+        return <AccountBalanceWallet className="text-gray-700" />;
+
+      // Trabajo y Educación
+      case "Work":
+        return <Work className="text-gray-700" />;
+      case "School":
+        return <School className="text-gray-700" />;
+      case "LibraryBooks":
+        return <LibraryBooks className="text-gray-700" />;
+
+      // Viajes y Turismo
+      case "Hotel":
+        return <Hotel className="text-gray-700" />;
+      case "BeachAccess":
+        return <BeachAccess className="text-gray-700" />;
+      case "Public":
+        return <Public className="text-gray-700" />;
+      case "Park":
+        return <Park className="text-gray-700" />;
+
+      // Tecnología
+      case "PhoneAndroid":
+        return <PhoneAndroid className="text-gray-700" />;
+      case "Laptop":
+        return <Laptop className="text-gray-700" />;
+      case "DevicesOther":
+        return <DevicesOther className="text-gray-700" />;
+
+      // Eventos y Celebraciones
+      case "Celebration":
+        return <Celebration className="text-gray-700" />;
+      case "Cake":
+        return <Cake className="text-gray-700" />;
+
+      // Mascotas y Familia
+      case "Pets":
+        return <Pets className="text-gray-700" />;
+      case "ChildCare":
+        return <ChildCare className="text-gray-700" />; // Arte y Creatividad
+      case "Brush":
+        return <Brush className="text-gray-700" />; // Personal
+      case "Favorite":
+        return <Favorite className="text-gray-700" />;
+
+      // Categoría eliminada o desconocida
+      case "QuestionMark":
+        return <HelpOutline className="text-gray-700" />;
+
+      default:
+        return <ShoppingCart className="text-gray-700" />;
+    }
+  };
+
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState(""); // Inicializar vacío hasta detectar tipo de usuario
@@ -113,7 +300,8 @@ export default function Dashboard() {
 
     return fechaCobro.diff(dayjs(), "day");
   }, [finanzas]);
-  //#endregion  //#region Obtener Datos Finanzas
+  //#endregion
+  //#region Obtener Datos Finanzas
   useEffect(() => {
     if (!user) return;
 
@@ -129,11 +317,7 @@ export default function Dashboard() {
 
         if (isUserNew) {
           setShowWelcome(true);
-        }
-
-        // Ordenamos los IDs (opcional)
-        ids.sort(); // Solo agregar el mes actual al select si NO es usuario nuevo
-        // Para usuarios nuevos, la lista debe estar vacía hasta que completen el wizard
+        } // Ordenamos los IDs (opcional)
         if (!isUserNew) {
           const current = dayjs().format("YYYY-MM");
           if (!ids.includes(current)) {
@@ -146,15 +330,19 @@ export default function Dashboard() {
           }
         }
 
-        setPeriodosDisponibles(ids); // Cargar categorías
-        const categoriasData = await getCategories(user.uid);
-        setCategorias(categoriasData);
+        setPeriodosDisponibles(ids);
+
+        // Cargar categorías también en este efecto para mantener todo sincronizado
+        if (user) {
+          const categoriasData = await getCategories(user.uid);
+          setCategorias(categoriasData);
+        }
       } catch (error) {
         console.error("Error listando periodos:", error);
-        toast.showError("Error al cargar los períodos disponibles");
+        toast.showError("Error al cargar los datos");
       }
     })();
-  }, [user, toast, periodo]);
+  }, [user, toast, periodo, editModalOpen, modalOpen]);
   const fetchCurrentPeriodData = useCallback(async () => {
     if (!user || !periodo) return;
 
@@ -295,6 +483,7 @@ export default function Dashboard() {
     setShowWelcome(false);
   };
   //#endregion
+
   return (
     <div className="p-0 md:p-4">
       <div className="w-full max-w-7xl flex justify-end">
@@ -455,19 +644,26 @@ export default function Dashboard() {
                         ref={index === numGastos - 1 ? lastGastoRef : null}
                         className="flex justify-between items-center bg-gray-100 p-4 rounded-lg"
                       >
-                        <div>
-                          <p className="font-bold">{gasto.descripcion}</p>
-                          {gasto.categoria && (
-                            <p className="text-sm text-gray-700 font-medium">
-                              {gasto.categoria.nombre}
+                        {" "}
+                        <div className="flex">
+                          <div>
+                            <p className="font-bold">{gasto.descripcion}</p>
+                            {gasto.categoria && (
+                              <div className="flex items-center gap-1">
+                                {gasto.categoria?.icono &&
+                                  renderIcon(gasto.categoria.icono)}
+                                <p className="text-sm text-gray-700 font-medium">
+                                  {gasto.categoria.nombre}
+                                </p>
+                              </div>
+                            )}
+                            <p className="text-sm text-gray-500">
+                              {dayjs(gasto.fecha).format("DD/MM/YYYY")}
                             </p>
-                          )}
-                          <p className="text-sm text-gray-500">
-                            {dayjs(gasto.fecha).format("DD/MM/YYYY")}
-                          </p>
-                          <span className="text-red-500 font-bold">
-                            -{formatCurrency(gasto.monto)}
-                          </span>
+                            <span className="text-red-500 font-bold">
+                              -{formatCurrency(gasto.monto)}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <button
@@ -556,7 +752,10 @@ export default function Dashboard() {
                 {" "}
                 {categorias.map((categoria) => (
                   <MenuItem key={categoria.id} value={categoria.id}>
-                    <span>{categoria.nombre}</span>
+                    <div className="flex items-center gap-2">
+                      {renderIcon(categoria.icono)}
+                      <span>{categoria.nombre}</span>
+                    </div>
                   </MenuItem>
                 ))}
               </TextField>

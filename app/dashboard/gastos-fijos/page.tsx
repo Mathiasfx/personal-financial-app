@@ -6,7 +6,59 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
-import { Add, DeleteRounded, Edit } from "@mui/icons-material";
+import { Add, DeleteRounded, Edit, HelpOutline } from "@mui/icons-material";
+import {
+  ShoppingCart,
+  DirectionsCar,
+  Fastfood,
+  Movie,
+  FitnessCenter,
+  LocalHospital,
+  Home,
+  Flight,
+  SportsSoccer,
+  Restaurant,
+  Work,
+  School,
+  ShoppingBag,
+  LocalGasStation,
+  ElectricalServices,
+  WaterDrop,
+  Wifi,
+  MedicalServices,
+  LocalPharmacy,
+  TheaterComedy,
+  MusicNote,
+  Nightlight,
+  SportsEsports,
+  AttachMoney,
+  CreditCard,
+  Receipt,
+  AccountBalance,
+  Savings,
+  AccountBalanceWallet,
+  Pets,
+  ChildCare,
+  Spa,
+  Celebration,
+  Cake,
+  PhoneAndroid,
+  Laptop,
+  DevicesOther,
+  Public,
+  BeachAccess,
+  Park,
+  Hotel,
+  Train,
+  DirectionsBus,
+  LocalTaxi,
+  TwoWheeler,
+  Brush,
+  LibraryBooks,
+  LocalLaundryService,
+  CleaningServices,
+  Favorite,
+} from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/lib/useToast";
 import {
@@ -24,7 +76,7 @@ import { MenuItem, Switch } from "@mui/material";
 import DateWrapper from "../components/DateWrapper";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { formatCurrency, sumaGastoFijoTotal } from "@/lib/utils";
+import { formatCurrency, sumaGastoFijoTotal, dayjsToDate } from "@/lib/utils";
 import { Finanzas } from "@/models/finanzas.model";
 import { Categorias } from "@/models/categorias.model";
 
@@ -45,7 +97,140 @@ export default function GastosFijosPage() {
     fechaVencimiento: dayjs().toDate(),
   });
   const [categoriasDB, setCategoriasDB] = useState<Categorias[]>([]);
-  //#region Carga de Categorias
+
+  // IconMap para renderizar el icono correcto según el nombre
+  const renderIcon = (iconName: string) => {
+    switch (iconName) {
+      // Compras y Gastos Diarios
+      case "ShoppingCart":
+        return <ShoppingCart className="text-gray-700" />;
+      case "ShoppingBag":
+        return <ShoppingBag className="text-gray-700" />;
+      case "Restaurant":
+        return <Restaurant className="text-gray-700" />;
+      case "Fastfood":
+        return <Fastfood className="text-gray-700" />;
+
+      // Transporte
+      case "DirectionsCar":
+        return <DirectionsCar className="text-gray-700" />;
+      case "LocalGasStation":
+        return <LocalGasStation className="text-gray-700" />;
+      case "Flight":
+        return <Flight className="text-gray-700" />;
+      case "Train":
+        return <Train className="text-gray-700" />;
+      case "DirectionsBus":
+        return <DirectionsBus className="text-gray-700" />;
+      case "LocalTaxi":
+        return <LocalTaxi className="text-gray-700" />;
+      case "TwoWheeler":
+        return <TwoWheeler className="text-gray-700" />;
+
+      // Hogar y Servicios
+      case "Home":
+        return <Home className="text-gray-700" />;
+      case "ElectricalServices":
+        return <ElectricalServices className="text-gray-700" />;
+      case "WaterDrop":
+        return <WaterDrop className="text-gray-700" />;
+      case "Wifi":
+        return <Wifi className="text-gray-700" />;
+      case "LocalLaundryService":
+        return <LocalLaundryService className="text-gray-700" />;
+      case "CleaningServices":
+        return <CleaningServices className="text-gray-700" />;
+
+      // Salud y Bienestar
+      case "LocalHospital":
+        return <LocalHospital className="text-gray-700" />;
+      case "MedicalServices":
+        return <MedicalServices className="text-gray-700" />;
+      case "LocalPharmacy":
+        return <LocalPharmacy className="text-gray-700" />;
+      case "FitnessCenter":
+        return <FitnessCenter className="text-gray-700" />;
+      case "Spa":
+        return <Spa className="text-gray-700" />;
+
+      // Entretenimiento y Ocio
+      case "Movie":
+        return <Movie className="text-gray-700" />;
+      case "TheaterComedy":
+        return <TheaterComedy className="text-gray-700" />;
+      case "MusicNote":
+        return <MusicNote className="text-gray-700" />;
+      case "Nightclub":
+        return <Nightlight className="text-gray-700" />;
+      case "SportsEsports":
+        return <SportsEsports className="text-gray-700" />;
+      case "SportsSoccer":
+        return <SportsSoccer className="text-gray-700" />;
+
+      // Finanzas y Pagos
+      case "AttachMoney":
+        return <AttachMoney className="text-gray-700" />;
+      case "CreditCard":
+        return <CreditCard className="text-gray-700" />;
+      case "Receipt":
+        return <Receipt className="text-gray-700" />;
+      case "AccountBalance":
+        return <AccountBalance className="text-gray-700" />;
+      case "Savings":
+        return <Savings className="text-gray-700" />;
+      case "AccountBalanceWallet":
+        return <AccountBalanceWallet className="text-gray-700" />;
+
+      // Trabajo y Educación
+      case "Work":
+        return <Work className="text-gray-700" />;
+      case "School":
+        return <School className="text-gray-700" />;
+      case "LibraryBooks":
+        return <LibraryBooks className="text-gray-700" />;
+
+      // Viajes y Turismo
+      case "Hotel":
+        return <Hotel className="text-gray-700" />;
+      case "BeachAccess":
+        return <BeachAccess className="text-gray-700" />;
+      case "Public":
+        return <Public className="text-gray-700" />;
+      case "Park":
+        return <Park className="text-gray-700" />;
+
+      // Tecnología
+      case "PhoneAndroid":
+        return <PhoneAndroid className="text-gray-700" />;
+      case "Laptop":
+        return <Laptop className="text-gray-700" />;
+      case "DevicesOther":
+        return <DevicesOther className="text-gray-700" />;
+
+      // Eventos y Celebraciones
+      case "Celebration":
+        return <Celebration className="text-gray-700" />;
+      case "Cake":
+        return <Cake className="text-gray-700" />;
+
+      // Mascotas y Familia
+      case "Pets":
+        return <Pets className="text-gray-700" />;
+      case "ChildCare":
+        return <ChildCare className="text-gray-700" />; // Arte y Creatividad
+      case "Brush":
+        return <Brush className="text-gray-700" />; // Personal
+      case "Favorite":
+        return <Favorite className="text-gray-700" />;
+
+      // Categoría eliminada o desconocida
+      case "QuestionMark":
+        return <HelpOutline className="text-gray-700" />;
+
+      default:
+        return <ShoppingCart className="text-gray-700" />;
+    }
+  }; //#region Carga de Categorias
   useEffect(() => {
     if (user) {
       const fetchCategorias = async () => {
@@ -60,7 +245,7 @@ export default function GastosFijosPage() {
       fetchCategorias();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]); // toast intencionalmente omitido para evitar bucles infinitos
+  }, [user, editModalOpen, addModalOpen]); // Recargamos categorías cuando se abre cualquier modal
   //#endregion
 
   //#region Fetch Finanzas Periodo Actual
@@ -343,22 +528,29 @@ export default function GastosFijosPage() {
                   key={nombre}
                   className="flex justify-between items-center bg-gray-100 p-4 rounded-xl shadow-sm w-full mb-3"
                 >
-                  <div>
-                    <p className="text-lg font-bold">{nombre}</p>
-                    <p className="text-sm text-gray-500">
-                      Monto: {formatCurrency(gasto.monto)}
-                    </p>
-                    <p className="text-sm font-semibold text-gray-700">
-                      {gasto.categoria?.nombre}
-                    </p>
-                    {gasto.fechaVencimiento && (
+                  {" "}
+                  <div className="flex">
+                    <div>
+                      <p className="text-lg font-bold">{nombre}</p>
                       <p className="text-sm text-gray-500">
-                        {(gasto.fechaVencimiento instanceof Date
-                          ? gasto.fechaVencimiento // ya es Date
-                          : (gasto.fechaVencimiento as Timestamp).toDate()
-                        ).toLocaleDateString()}
+                        Monto: {formatCurrency(gasto.monto)}
                       </p>
-                    )}
+                      <div className="flex items-center gap-1">
+                        {gasto.categoria?.icono &&
+                          renderIcon(gasto.categoria.icono)}
+                        <p className="text-sm font-semibold text-gray-700">
+                          {gasto.categoria?.nombre}
+                        </p>
+                      </div>
+                      {gasto.fechaVencimiento && (
+                        <p className="text-sm text-gray-500">
+                          {(gasto.fechaVencimiento instanceof Date
+                            ? gasto.fechaVencimiento // ya es Date
+                            : (gasto.fechaVencimiento as Timestamp).toDate()
+                          ).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-col items-end space-x-2">
                     <Switch
@@ -428,7 +620,7 @@ export default function GastosFijosPage() {
             inputMode="decimal"
             type="text"
             fullWidth
-            value={nuevoGasto.monto.toString()}
+            value={nuevoGasto.monto === 0 ? "" : nuevoGasto.monto.toString()}
             onChange={(e) => {
               let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
               rawValue = rawValue.replace(",", ".");
@@ -437,14 +629,8 @@ export default function GastosFijosPage() {
                 monto: rawValue === "" ? 0 : parseFloat(rawValue) || 0,
               });
             }}
-            onBlur={() => {
-              setNuevoGasto((prev) => ({
-                ...prev,
-                monto: prev.monto ? Number(prev.monto) : 0,
-              }));
-            }}
             sx={{ marginBottom: "1rem" }}
-          />
+          />{" "}
           <TextField
             select
             label="Categoría"
@@ -466,14 +652,16 @@ export default function GastosFijosPage() {
             {categoriasDB.length > 0 ? (
               categoriasDB.map((cat) => (
                 <MenuItem key={cat.id} value={cat.id}>
-                  {cat.nombre}
+                  <div className="flex items-center gap-2">
+                    {renderIcon(cat.icono)}
+                    <span>{cat.nombre}</span>
+                  </div>
                 </MenuItem>
               ))
             ) : (
               <MenuItem disabled>Cargando categorías...</MenuItem>
             )}
           </TextField>
-
           <DateWrapper>
             <DatePicker
               label="Fecha de Vencimiento"
@@ -492,7 +680,7 @@ export default function GastosFijosPage() {
               onChange={(newValue) => {
                 setNuevoGasto({
                   ...nuevoGasto,
-                  fechaVencimiento: newValue ? newValue.toDate() : undefined,
+                  fechaVencimiento: dayjsToDate(newValue) || undefined,
                 });
               }}
               sx={{ marginBottom: "1rem", width: "100%", marginTop: "1rem" }}
@@ -532,13 +720,15 @@ export default function GastosFijosPage() {
             value={gastoEditando?.descripcion}
             disabled
             sx={{ marginTop: "1rem" }}
-          ></TextField>
+          ></TextField>{" "}
           <TextField
             label="Monto"
             inputMode="decimal"
             type="text"
             fullWidth
-            value={gastoEditando?.monto ? gastoEditando.monto.toString() : ""}
+            value={
+              gastoEditando?.monto === 0 ? "" : gastoEditando?.monto.toString()
+            }
             onChange={(e) => {
               let rawValue = e.target.value.replace(/[^0-9.,]/g, "");
               rawValue = rawValue.replace(",", ".");
@@ -547,16 +737,6 @@ export default function GastosFijosPage() {
                   ? {
                       ...prev,
                       monto: rawValue === "" ? 0 : parseFloat(rawValue) || 0,
-                    }
-                  : null
-              );
-            }}
-            onBlur={() => {
-              setGastoEditando((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      monto: prev.monto ? Number(prev.monto) : 0,
                     }
                   : null
               );
@@ -585,17 +765,20 @@ export default function GastosFijosPage() {
             }}
             sx={{ marginBottom: "1rem", marginTop: "1rem" }}
           >
+            {" "}
             {categoriasDB.length > 0 ? (
               categoriasDB.map((cat) => (
                 <MenuItem key={cat.id} value={cat.id}>
-                  {cat.nombre}
+                  <div className="flex items-center gap-2">
+                    {renderIcon(cat.icono)}
+                    <span>{cat.nombre}</span>
+                  </div>
                 </MenuItem>
               ))
             ) : (
               <MenuItem disabled>Cargando categorías...</MenuItem>
             )}
           </TextField>
-
           <DateWrapper>
             {gastoEditando && (
               <DatePicker
@@ -615,12 +798,13 @@ export default function GastosFijosPage() {
                     : null
                 }
                 onChange={(newValue) => {
-                  if (newValue) {
+                  const newDate = dayjsToDate(newValue);
+                  if (newDate) {
                     setGastoEditando((prev) =>
                       prev
                         ? {
                             ...prev,
-                            fechaVencimiento: newValue.toDate(),
+                            fechaVencimiento: newDate,
                           }
                         : null
                     );
@@ -650,4 +834,3 @@ export default function GastosFijosPage() {
     </div>
   );
 }
-

@@ -21,9 +21,9 @@ function updateDateToNewMonth(
     // Manejar diferentes tipos de fecha (Date, Timestamp de Firestore, etc.)
     if (fechaVencimiento instanceof Date) {
       originalDate = dayjs(fechaVencimiento);
-    } else if (fechaVencimiento?.seconds) {
+    } else if (typeof fechaVencimiento === 'object' && fechaVencimiento !== null && 'seconds' in fechaVencimiento) {
       // Timestamp de Firestore
-      originalDate = dayjs(fechaVencimiento.seconds * 1000);
+      originalDate = dayjs((fechaVencimiento as { seconds: number }).seconds * 1000);
     } else if (typeof fechaVencimiento === 'string') {
       originalDate = dayjs(fechaVencimiento);
     } else {
@@ -486,17 +486,185 @@ export const deleteFixedExpense = async (userId: string, periodo: string, descri
   };
   
   export const updateCategory = async (userId: string, categoryId: string, updatedData: { nombre?: string; icono?: string }) => {
-    const categoryRef = doc(db, `usuarios/${userId}/categorias/${categoryId}`);
-    await updateDoc(categoryRef, updatedData);
+    try {
+      // 1. Primero actualizamos la categoría
+      const categoryRef = doc(db, `usuarios/${userId}/categorias/${categoryId}`);
+      await updateDoc(categoryRef, updatedData);
+      
+      // 2. Obtenemos la categoría actualizada completa
+      const updatedCategorySnap = await getDoc(categoryRef);
+      if (!updatedCategorySnap.exists()) {
+        throw new Error(`La categoría ${categoryId} no existe`);
+      }
+      
+      const updatedCategory = {
+        id: categoryId,
+        ...updatedCategorySnap.data()
+      };
+      
+      // 3. Obtenemos todos los períodos financieros
+      const periodsRef = collection(db, `usuarios/${userId}/finanzas`);
+      const periodsSnap = await getDocs(periodsRef);
+      
+      // 4. Para cada período, actualizamos los gastos que usan esta categoría
+      const updatePromises = periodsSnap.docs.map(async (periodDoc) => {
+        const periodId = periodDoc.id;
+        const periodData = periodDoc.data();
+        let hasUpdates = false;
+        
+        // Actualizar gastos fijos si existen
+        if (periodData.gastosFijos) {
+          const updatedGastosFijos = { ...periodData.gastosFijos };
+          
+          Object.entries(updatedGastosFijos).forEach(([key, gasto]: [string, any]) => {
+            if (gasto.categoria && gasto.categoria.id === categoryId) {
+              updatedGastosFijos[key] = {
+                ...gasto,
+                categoria: updatedCategory
+              };
+              hasUpdates = true;
+            }
+          });
+          
+          if (hasUpdates) {
+            await updateDoc(doc(db, `usuarios/${userId}/finanzas/${periodId}`), {
+              gastosFijos: updatedGastosFijos
+            });
+          }
+        }
+        
+        // Actualizar gastos variables si existen
+        if (periodData.gastosVariables && periodData.gastosVariables.length > 0) {
+          const updatedGastosVariables = [...periodData.gastosVariables];
+          let variablesUpdated = false;
+          
+          updatedGastosVariables.forEach((gasto: any, index) => {
+            if (gasto.categoria && gasto.categoria.id === categoryId) {
+              updatedGastosVariables[index] = {
+                ...gasto,
+                categoria: updatedCategory
+              };
+              variablesUpdated = true;
+            }
+          });
+          
+          if (variablesUpdated) {
+            await updateDoc(doc(db, `usuarios/${userId}/finanzas/${periodId}`), {
+              gastosVariables: updatedGastosVariables
+            });
+          }
+        }
+      });
+      
+      await Promise.all(updatePromises);
+      
+    } catch (error) {
+      console.error("Error al actualizar categoría y sus referencias:", error);
+      throw error;
+    }
   };
   
   export const deleteCategory = async (userId: string, categoryId: string) => {
-    const categoryRef = doc(db, `usuarios/${userId}/categorias/${categoryId}`);
-    await deleteDoc(categoryRef);
+    try {
+      // 1. Primero obtenemos todos los períodos financieros para actualizar los gastos
+      const periodsRef = collection(db, `usuarios/${userId}/finanzas`);
+      const periodsSnap = await getDocs(periodsRef);
+      
+      // 2. Crear una categoría predeterminada para reemplazar la que se eliminará
+      const defaultCategory = {
+        id: "categoria-eliminada",
+        nombre: "Categoría Eliminada",
+        icono: "QuestionMark"  // Icono para categorías eliminadas
+      };
+      
+      // 3. Para cada período, actualizamos los gastos que usan la categoría a eliminar
+      const updatePromises = periodsSnap.docs.map(async (periodDoc) => {
+        const periodId = periodDoc.id;
+        const periodData = periodDoc.data();
+        let hasUpdates = false;
+        
+        // Actualizar gastos fijos si existen
+        if (periodData.gastosFijos) {
+          const updatedGastosFijos = { ...periodData.gastosFijos };
+          
+          Object.entries(updatedGastosFijos).forEach(([key, gasto]: [string, any]) => {
+            if (gasto.categoria && gasto.categoria.id === categoryId) {
+              updatedGastosFijos[key] = {
+                ...gasto,
+                categoria: defaultCategory
+              };
+              hasUpdates = true;
+            }
+          });
+          
+          if (hasUpdates) {
+            await updateDoc(doc(db, `usuarios/${userId}/finanzas/${periodId}`), {
+              gastosFijos: updatedGastosFijos
+            });
+          }
+        }
+        
+        // Actualizar gastos variables si existen
+        if (periodData.gastosVariables && periodData.gastosVariables.length > 0) {
+          const updatedGastosVariables = [...periodData.gastosVariables];
+          let variablesUpdated = false;
+          
+          updatedGastosVariables.forEach((gasto: any, index) => {
+            if (gasto.categoria && gasto.categoria.id === categoryId) {
+              updatedGastosVariables[index] = {
+                ...gasto,
+                categoria: defaultCategory
+              };
+              variablesUpdated = true;
+            }
+          });
+          
+          if (variablesUpdated) {
+            await updateDoc(doc(db, `usuarios/${userId}/finanzas/${periodId}`), {
+              gastosVariables: updatedGastosVariables
+            });
+          }
+        }
+      });
+      
+      // 4. Esperar a que todas las actualizaciones se completen
+      await Promise.all(updatePromises);
+      
+      // 5. Finalmente, eliminar la categoría
+      const categoryRef = doc(db, `usuarios/${userId}/categorias/${categoryId}`);
+      await deleteDoc(categoryRef);
+      
+    } catch (error) {
+      console.error("Error al eliminar categoría y actualizar referencias:", error);
+      throw error;
+    }
   };
 
+  /**
+   * Crea categorías básicas por defecto para un nuevo usuario
+   */
+  export const createDefaultCategories = async (userId: string) => {
+    const defaultCategories = [
+      { nombre: "Supermercado", icono: "ShoppingCart" },
+      { nombre: "Transporte", icono: "DirectionsCar" },
+      { nombre: "Comida", icono: "Fastfood" },
+      { nombre: "Entretenimiento", icono: "Movie" },
+      { nombre: "Salud", icono: "LocalHospital" },
+      { nombre: "Hogar", icono: "Home" }
+    ];
 
+    try {
+      // Crear todas las categorías en paralelo
+      const categoryPromises = defaultCategories.map(category => 
+        addCategory(userId, category)
+      );
+      
+      await Promise.all(categoryPromises);
+      console.log("✅ Categorías por defecto creadas exitosamente");
+    } catch (error) {
+      console.error("❌ Error creando categorías por defecto:", error);
+      throw error;
+    }
+  };
 
-  
   //#endregion
-  

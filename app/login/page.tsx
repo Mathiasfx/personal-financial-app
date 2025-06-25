@@ -11,7 +11,6 @@ import { useToast } from "@/lib/useToast";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 import imagepreview from "../../public/images/dashboard_preview.png";
-
 import { TextField, Button, Divider, CircularProgress } from "@mui/material";
 import Link from "next/link";
 
@@ -151,7 +150,9 @@ export default function LoginPage() {
             </Link>
           </p>
           <div className="flex justify-center md:justify-end">
+
             <p className="text-xs">Version: 1.2.0</p>
+
           </div>
         </div>
         {/* Sección Derecha - Imagen */}
