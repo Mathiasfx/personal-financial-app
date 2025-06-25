@@ -75,17 +75,9 @@ const InflationLineChart: React.FC<InflationLineChartProps> = ({ data }) => {
     .join(" ");
 
   return (
-    <div className="h-80 p-4 space-y-4">
+    <div className="h-80 p-2 space-y-1">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-semibold text-gray-700">
-            📈 Evolución de Inflación (%)
-          </h3>
-          <p className="text-xs text-gray-500">
-            Tendencia de incremento en gastos fijos
-          </p>
-        </div>
         {selectedPeriod && (
           <div className="text-right">
             <div className="text-sm font-bold text-gray-700">
