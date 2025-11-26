@@ -80,6 +80,7 @@ import { deleteExpense } from "@/lib/finanzasService";
 import DateWrapper from "./components/DateWrapper";
 import AgregarGastos from "./components/AgregarGastos";
 import WelcomeMessage from "./components/WelcomeMessage";
+import { Search } from "@mui/icons-material";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -231,10 +232,11 @@ export default function Dashboard() {
   const [periodosDisponibles, setPeriodosDisponibles] = useState<string[]>([]);
   const [periodo, setPeriodo] = useState(""); // Inicializar vacío hasta detectar tipo de usuario
   const [loading, setLoading] = useState<boolean>(true);
-  const [numGastos, setNumGastos] = useState(10);
+  const [numGastos, setNumGastos] = useState(5);
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [busquedaGastos, setBusquedaGastos] = useState("");
   const [categorias, setCategorias] = useState<Categorias[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -342,7 +344,7 @@ export default function Dashboard() {
         toast.showError("Error al cargar los datos");
       }
     })();
-  }, [user, toast, periodo, editModalOpen, modalOpen]);
+  }, [user, toast, periodo, modalOpen]);
   const fetchCurrentPeriodData = useCallback(async () => {
     if (!user || !periodo) return;
 
@@ -369,7 +371,7 @@ export default function Dashboard() {
     fetchCurrentPeriodData();
   }, [fetchCurrentPeriodData]);
   //#endregion
-  //#region Gastos Funciones
+  // #region Gastos Funciones
   //actualiza la info cuando se agrega un gasto y cierra modal
   const handleGastoAgregado = async () => {
     setModalOpen(false);
@@ -621,9 +623,21 @@ export default function Dashboard() {
 
           <div className="mt-8 space-y-4">
             <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-7xl ">
-              <h6 className="text-xl font-bold text-gray-800 mb-4">
-                Transacciones de gastos variables
-              </h6>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <h6 className="text-xl font-bold text-gray-800">
+                  Transacciones de gastos variables
+                </h6>
+                <div className="relative w-full md:w-64">
+                  <input
+                    type="text"
+                    placeholder="Buscar gasto..."
+                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"
+                    value={busquedaGastos}
+                    onChange={(e) => setBusquedaGastos(e.target.value)}
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                </div>
+              </div>
               {loading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((_, index) => (
@@ -636,6 +650,11 @@ export default function Dashboard() {
               ) : finanzas?.gastosVariables?.length && user ? (
                 <div className="space-y-4">
                   {finanzas?.gastosVariables
+                    .filter((gasto) =>
+                      gasto.descripcion
+                        .toLowerCase()
+                        .includes(busquedaGastos.toLowerCase())
+                    )
                     .sort((a, b) => dayjs(b.fecha).diff(dayjs(a.fecha)))
                     .slice(0, numGastos)
                     .map((gasto, index) => (

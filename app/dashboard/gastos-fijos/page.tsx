@@ -6,7 +6,13 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
-import { Add, DeleteRounded, Edit, HelpOutline } from "@mui/icons-material";
+import {
+  Add,
+  DeleteRounded,
+  Edit,
+  HelpOutline,
+  Search,
+} from "@mui/icons-material";
 import {
   ShoppingCart,
   DirectionsCar,
@@ -85,6 +91,9 @@ export default function GastosFijosPage() {
   const toast = useToast();
   const [finanzas, setFinanzas] = useState<Finanzas | null>(null);
   const [total, setTotal] = useState(0);
+  const [totalPagado, setTotalPagado] = useState(0);
+  const [totalPendiente, setTotalPendiente] = useState(0);
+  const [busqueda, setBusqueda] = useState("");
   const [periodo, setPeriodo] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -277,9 +286,20 @@ export default function GastosFijosPage() {
   //#region Set Total de Gastos Fijos
   useEffect(() => {
     if (finanzas?.gastosFijos) {
-      setTotal(
-        sumaGastoFijoTotal(Object.values(finanzas.gastosFijos) as GastoFijo[])
-      );
+      const gastos = Object.values(finanzas.gastosFijos) as GastoFijo[];
+      const totalCalculado = sumaGastoFijoTotal(gastos);
+      const pagado = gastos
+        .filter((gasto) => gasto.pagado)
+        .reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
+      const pendiente = totalCalculado - pagado;
+
+      setTotal(totalCalculado);
+      setTotalPagado(pagado);
+      setTotalPendiente(pendiente);
+    } else {
+      setTotal(0);
+      setTotalPagado(0);
+      setTotalPendiente(0);
     }
   }, [finanzas?.gastosFijos]);
   //#endregion
@@ -477,29 +497,66 @@ export default function GastosFijosPage() {
   //#endregion
 
   return (
-    <div className="p-0 md:p-4">
-      <div className="flex max-w-screen-lg justify-between items-center mb-4">
-        <div className="w-full flex-col items-start md:w-80 md:flex-row flex flex-1 justify-start md:items-center">
-          <h1 className="text-xl font-bold m-0 md:mr-5">Gastos Fijos</h1>
-          <h2 className="m-0 text-xl font-medium text-gray-700 ">
-            Total: {formatCurrency(total)}
-          </h2>
+    <div className="px-0 md:px-0 w-full">
+      <div className="w-full">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-8 w-full">
+            <h1 className="text-xl font-bold">Gastos Fijos</h1>
+            <div className="flex flex-wrap gap-4 items-center">
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Total</span>
+                <span className="text-xl font-medium text-gray-700">
+                  {formatCurrency(total)}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Pagado</span>
+                <span className="text-xl font-medium text-green-600">
+                  {formatCurrency(totalPagado)}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Pendiente</span>
+                <span
+                  className={`text-xl font-medium ${
+                    totalPendiente > 0 ? "text-red-600" : "text-gray-700"
+                  }`}
+                >
+                  {formatCurrency(totalPendiente)}
+                </span>
+              </div>
+            </div>
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Filtrar gasto..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="w-full mt-4 md:mt-0 md:w-auto md:ml-4">
+            <button
+              className="flex items-center justify-center gap-2 px-6 py-3 w-full text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300 whitespace-nowrap"
+              onClick={() => setAddModalOpen(true)}
+            >
+              <Add className="text-xl font-bold flex-shrink-0" />
+              <span className="text-lg font-bold">Gasto Fijo</span>
+            </button>
+          </div>
         </div>
-
-        <button
-          className="flex items-center gap-2 px-6 border-none py-3 text-white bg-gray-900 rounded-full shadow-md hover:bg-gray-700 hover:shadow-lg transition-all duration-300   mb-2"
-          onClick={() => setAddModalOpen(true)}
-        >
-          <Add className="text-xl font-bold" />
-          <span className="text-lg font-bold"> Gasto Fijo</span>
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 w-full max-w-5xl ">
+      <div className="w-full">
         {/* Card contenedor */}
         <div className="bg-white shadow-md rounded-2xl p-6 min-h-[180px]">
           {finanzas?.gastosFijos ? (
             Object.entries(finanzas.gastosFijos)
+              .filter(([nombreGasto, _]) =>
+                nombreGasto.toLowerCase().includes(busqueda.toLowerCase())
+              )
               .sort(([_, gastoA], [__, gastoB]) => {
                 const fechaA = gastoA.fechaVencimiento
                   ? gastoA.fechaVencimiento instanceof Date
