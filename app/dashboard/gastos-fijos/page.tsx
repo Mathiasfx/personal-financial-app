@@ -556,13 +556,9 @@ export default function GastosFijosPage() {
             Object.entries(finanzas.gastosFijos)
               .filter(
                 ([_, gasto]) =>
-                  gasto.descripcion
-                    .toLowerCase()
-                    .includes(busqueda.toLowerCase()) ||
-                  (gasto.categoria?.nombre
+                  gasto.categoria?.nombre
                     ?.toLowerCase()
-                    .includes(busqueda.toLowerCase()) ??
-                    false)
+                    .includes(busqueda.toLowerCase()) ?? false
               )
               .sort(([_, gastoA], [__, gastoB]) => {
                 const fechaA = gastoA.fechaVencimiento
