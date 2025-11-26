@@ -159,4 +159,4 @@ const KeyMetrics: React.FC<KeyMetricsProps> = ({ data }) => {
   );
 };
 
-export
+export default KeyMetrics;

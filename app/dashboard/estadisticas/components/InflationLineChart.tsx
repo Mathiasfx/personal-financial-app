@@ -289,4 +289,25 @@ const InflationLineChart: React.FC<InflationLineChartProps> = ({ data }) => {
           <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
           <span>Reducción</span>
         </div>
-        <div className="flex items-cen
+        <div className="flex items-center space-x-1">
+          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+          <span>0-3% Baja</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+          <span>3-8% Moderada</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+          <span>8-15% Alta</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+          <span>+15% Muy alta</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default InflationLineChart;

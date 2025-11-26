@@ -241,4 +241,10 @@ export default function EstadisticasPage() {
               </h2>
               {/* Las cards ocupan el 100% del ancho, sin columnas */}
               <KeyMetrics data={filteredData} />
-      
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
