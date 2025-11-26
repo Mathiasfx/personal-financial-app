@@ -103,47 +103,39 @@ export function calculateFinancialHealthScore(periods: PeriodData[]): FinancialH
  * Calcula el factor de relaciÃ³n entre gastos e ingresos
  */
 function calculateExpenseToIncomeFactor(data: Finanzas): HealthFactor {
-  // Calcular total de ingresos
   const totalIncome = (data.ingresos || 0) + (data.ingresosExtras || 0);
-  
-  // Calcular total de gastos
   const fixedExpenses = Object.values(data.gastosFijos || {}).reduce(
     (sum, gasto) => sum + gasto.monto,
     0
   );
-  
   const variableExpenses = (data.gastosVariables || []).reduce(
     (sum, gasto) => sum + gasto.monto,
     0
   );
-  
   const totalExpenses = fixedExpenses + variableExpenses + (data.inversiones || 0);
-  
-  // Calcular ratio (evitar divisiÃ³n por cero)
+
   const ratio = totalIncome > 0 ? totalExpenses / totalIncome : 1;
-  
-  // Asignar puntuaciÃ³n (30 puntos mÃ¡ximo)
+
   let score = 0;
   let status: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' = 'critical';
-  
+
   if (ratio <= 0.5) {
-    score = 30; // Excelente: gasta menos del 50% de ingresos
+    score = 30;
     status = 'excellent';
   } else if (ratio <= 0.7) {
-    score = 24; // Muy bien: gasta entre 50-70% de ingresos
+    score = 24;
     status = 'good';
   } else if (ratio <= 0.85) {
-    score = 18; // Bien: gasta entre 70-85% de ingresos
+    score = 18;
     status = 'fair';
   } else if (ratio <= 1) {
-    score = 12; // Regular: gasta entre 85-100% de ingresos
+    score = 10; // Penaliza mÃ¡s si estÃ¡ cerca del lÃ­mite
     status = 'poor';
   } else {
-    // Gasta mÃ¡s de lo que ingresa
-    score = Math.max(0, 30 - Math.round((ratio - 1) * 60)); // PenalizaciÃ³n progresiva
+    score = Math.max(0, 10 - Math.round((ratio - 1) * 40)); // PenalizaciÃ³n mÃ¡s fuerte si gasta mÃ¡s de lo que ingresa
     status = 'critical';
   }
-  
+
   return {
     name: 'Balance Ingresos/Gastos',
     score,
@@ -157,10 +149,8 @@ function calculateExpenseToIncomeFactor(data: Finanzas): HealthFactor {
  * Calcula el factor de ahorro
  */
 function calculateSavingsFactor(data: Finanzas): HealthFactor {
-  // Calcular total de ingresos
   const totalIncome = (data.ingresos || 0) + (data.ingresosExtras || 0);
-  
-  // Validar datos de entrada
+
   if (totalIncome === 0) {
     return {
       name: 'Capacidad de Ahorro',
@@ -170,58 +160,50 @@ function calculateSavingsFactor(data: Finanzas): HealthFactor {
       status: 'critical'
     };
   }
-  
-  // Calcular total de gastos
+
   const fixedExpenses = Object.values(data.gastosFijos || {}).reduce(
     (sum, gasto) => sum + gasto.monto,
     0
   );
-  
   const variableExpenses = (data.gastosVariables || []).reduce(
     (sum, gasto) => sum + gasto.monto,
     0
   );
-  
   const totalExpenses = fixedExpenses + variableExpenses;
-  
-  // Calcular ahorros (incluyendo inversiones)
+
+  // Solo cuenta el ahorro real disponible (no inversiones)
   const savings = totalIncome - totalExpenses;
   const savingsRate = savings / totalIncome;
-  
-  // Calcular ahorro mÃ¡s inversiones
-  const totalSavings = savings + (data.inversiones || 0);
-  const totalSavingsRate = totalSavings / totalIncome;
-  
-  // Asignar puntuaciÃ³n (25 puntos mÃ¡ximo)
+
   let score = 0;
   let status: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' = 'critical';
-  
-  if (totalSavingsRate >= 0.25) {
-    score = 25; // Excelente: ahorra 25% o mÃ¡s
+
+  if (savingsRate >= 0.25) {
+    score = 25;
     status = 'excellent';
-  } else if (totalSavingsRate >= 0.15) {
-    score = 20; // Muy bien: ahorra entre 15-25%
+  } else if (savingsRate >= 0.15) {
+    score = 20;
     status = 'good';
-  } else if (totalSavingsRate >= 0.10) {
-    score = 15; // Bien: ahorra entre 10-15%
+  } else if (savingsRate >= 0.10) {
+    score = 15;
     status = 'fair';
-  } else if (totalSavingsRate >= 0.05) {
-    score = 10; // Regular: ahorra entre 5-10%
+  } else if (savingsRate >= 0.05) {
+    score = 10;
     status = 'poor';
-  } else if (totalSavingsRate >= 0) {
-    score = 5; // Bajo: ahorra menos del 5%
+  } else if (savingsRate >= 0) {
+    score = 5;
     status = 'poor';
   } else {
-    score = 0; // CrÃ­tico: no hay ahorro o es negativo
+    score = 0;
     status = 'critical';
   }
-  
+
   return {
     name: 'Capacidad de Ahorro',
     score,
     maxScore: 25,
-    description: totalSavingsRate >= 0 
-      ? `Ahorras ${Math.round(totalSavingsRate * 100)}% de tus ingresos` 
+    description: savingsRate >= 0
+      ? `Ahorras ${Math.round(savingsRate * 100)}% de tus ingresos`
       : 'Tus gastos superan tus ingresos',
     status
   };
@@ -402,62 +384,53 @@ function calculateConsistencyFactor(periods: PeriodData[]): HealthFactor {
  * Calcula el factor de gestiÃ³n de gastos fijos
  */
 function calculateFixedExpensesFactor(data: Finanzas): HealthFactor {
-  // Calcular total de ingresos
   const totalIncome = (data.ingresos || 0) + (data.ingresosExtras || 0);
-  
-  // Calcular total de gastos fijos
   const fixedExpenses = Object.values(data.gastosFijos || {}).reduce(
     (sum, gasto) => sum + gasto.monto,
     0
   );
-  
-  // Calcular ratio de gastos fijos sobre ingresos
   const fixedExpenseRatio = totalIncome > 0 ? fixedExpenses / totalIncome : 1;
-  
-  // Calcular la proporciÃ³n de gastos fijos pagados
+
   const totalFixedExpenseItems = Object.keys(data.gastosFijos || {}).length;
   const paidFixedExpenseItems = Object.values(data.gastosFijos || {}).filter(gasto => gasto.pagado).length;
   const paidRatio = totalFixedExpenseItems > 0 ? paidFixedExpenseItems / totalFixedExpenseItems : 1;
-  
-  // Asignar puntuaciÃ³n (15 puntos mÃ¡ximo)
-  // Combinar ratio de gastos fijos y cumplimiento de pagos
+
   let score = 0;
   let status: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' = 'fair';
-  
-  // Parte 1: Peso de gastos fijos (7.5 puntos mÃ¡x)
+
+  // Penaliza mÃ¡s si los gastos fijos son altos
   let ratioScore = 0;
   if (fixedExpenseRatio <= 0.3) {
-    ratioScore = 7.5; // Excelente: gastos fijos <= 30% de ingresos
+    ratioScore = 7.5;
   } else if (fixedExpenseRatio <= 0.4) {
-    ratioScore = 6; // Muy bien: entre 30-40%
+    ratioScore = 6;
   } else if (fixedExpenseRatio <= 0.5) {
-    ratioScore = 4.5; // Bien: entre 40-50%
+    ratioScore = 4.5;
   } else if (fixedExpenseRatio <= 0.6) {
-    ratioScore = 3; // Regular: entre 50-60%
+    ratioScore = 2;
   } else if (fixedExpenseRatio <= 0.7) {
-    ratioScore = 1.5; // Alto: entre 60-70%
+    ratioScore = 0.5;
   } else {
-    ratioScore = 0; // CrÃ­tico: mÃ¡s del 70% son gastos fijos
+    ratioScore = 0;
   }
-  
-  // Parte 2: Cumplimiento de pagos fijos (7.5 puntos mÃ¡x)
+
   let paidScore = 0;
   if (paidRatio >= 0.9) {
-    paidScore = 7.5; // Excelente: 90%+ de pagos realizados
+    paidScore = 7.5;
   } else if (paidRatio >= 0.8) {
-    paidScore = 6; // Muy bien: 80-90%
+    paidScore = 6;
   } else if (paidRatio >= 0.7) {
-    paidScore = 4.5; // Bien: 70-80%
+    paidScore = 4.5;
   } else if (paidRatio >= 0.6) {
-    paidScore = 3; // Regular: 60-70%
+    paidScore = 2;
   } else if (paidRatio >= 0.5) {
-    paidScore = 1.5; // Bajo: 50-60%
+    paidScore = 0.5;
   } else {
-    paidScore = 0; // CrÃ­tico: menos del 50%
+    paidScore = 0;
   }
-  
+
   score = ratioScore + paidScore;
-  
+
   if (score >= 12) {
     status = 'excellent';
   } else if (score >= 9) {
@@ -469,7 +442,7 @@ function calculateFixedExpensesFactor(data: Finanzas): HealthFactor {
   } else {
     status = 'critical';
   }
-  
+
   return {
     name: 'GestiÃ³n de Gastos Fijos',
     score,
@@ -757,3 +730,10 @@ function getDefaultHealthScore(): FinancialHealthScore {
     ]
   };
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                             wt‹€MØ>°N!ø#>\ˆ”•-Qÿ‘>u÷ª‰ìıù#¾ª'2¡Oúu©¢Zß?|„Q¥uÄ Ã–øÌÊÍ&EÓ‘µ¨CcÒîŠ”v—éIÅ™Í_S}Ó’x£…é5cQÂ®3½É¡ğB…A#Æ¥)GbÂëo»AÜ4Ç2ÚŠx°Æ’L0aõ³›QÊóWƒì\bôHnšç"Â"RtVÜ¬\é:MZp°Lº¹áä€µ£ÙÃR'¶½åô]É–¸‹şq6Š”Ì¯ ÄùvÃRÅZ±Mßª9o­jõVõY?‰Ö>qú{ ³Ñ¸W˜¹2Ë OÍÁVyË“’š’+Ñ"•XÍa0WÇåácâ?jlvñ!t†yScpŒ?,4—ğ ´>CIyÍÒ›8³¼·ÅòæiI›Âz©ŒÈsğ#¯°ï›~êÁj³¦À8†0˜ïPlŠ5<‡n¦QÔuò\«fzäı/ôát2CW£lF
+I°Ôë Œ€•hÄ÷O„n£%`âxº©ŒG–ç4ï§/òÛP¢…"dÿKÿuÕ<
+FòÅ¬™Í`	øp~¡å@áŠÃçó2¶}ÛÄ
+PYÄ¤¬6˜@µkl+Ğø5qè#ì6‘5Â»I›ÓÃb{&d²Æ@\ö”ŞZî×™˜åâªŒşHùL°ÍRõÅ•mD½Uáoìq`¯3Ñ½Áa¿ÀK ‰Ö+$ËgÀ~•?sñúpÍ€àÕ!Õ"O—xHşøvÑÎ€x¿H‹	Çœ°+j ]ÿö~	íQRÃ,²uÉ­ğ>”^…XŠö)ñƒÎ
+XÌyÙ»YÓ•Ñ³åIí,[›: R`ÖÆõVºkE®Îñ{¦4%Äd%Â´dŞªaØ)%ºE'y3q*
+(<í°wªv—sê ³Ş¯,‚f'à.qª9ã]¼XÇdøíã-©@nµéjØ ~â/æ×qµb‘ìeÎÄ2±2 ‘?¢°ßD¢šã&fíï.mµfÍ ¬ã/CŒ.Eú·ĞyK%{Ş=×Ê†œĞœ¦ƒƒ‘$Ñä¯ßûEµ?ıa
+GÚüm™íñÍJØçÇ{"`Ä á1—|Š×Ø¤³üÂUa•öSò‰lu‡‘dî¿ze@¾ÏëëÒlÚY_è=¨ Ôè…îN¨Ÿãu×>vukÂIDU ó="Äô“•ôf™t®¼†o^Tt8~ëÙ5›>V‡¼?¥A¦ğ>ƒÓÇ€ü¢0a‡•Aƒò½xš`&¤"¤CæûÍ+}¶[JHÜŞ»ÈqòğËõô4Ç‚»ï&î¡·’Àø{¼ñ=¸¿ß:íÂ‘;á“·ŠLÎÔÙÁ æ,[+ó%Øpa}î.ÖæÊmmgm–H3$…Ä‡ è

@@ -23,7 +23,7 @@ const KeyMetrics: React.FC<KeyMetricsProps> = ({ data }) => {
   const metrics = calculateKeyMetrics(data);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
       {/* Promedio Mensual */}
       <div className="text-center p-6 bg-blue-50 rounded-lg border border-blue-200 transform transition-all duration-300 hover:shadow-lg hover:scale-105">
         <div className="flex items-center justify-center mb-3">
@@ -159,4 +159,4 @@ const KeyMetrics: React.FC<KeyMetricsProps> = ({ data }) => {
   );
 };
 
-export default KeyMetrics;
+export

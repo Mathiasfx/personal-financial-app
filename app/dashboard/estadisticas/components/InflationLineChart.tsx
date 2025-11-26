@@ -75,7 +75,7 @@ const InflationLineChart: React.FC<InflationLineChartProps> = ({ data }) => {
     .join(" ");
 
   return (
-    <div className="h-80 p-2 space-y-1">
+    <div className="h-80 p-2 space-y-1 relative">
       {/* Header */}
       <div className="flex justify-between items-center">
         {selectedPeriod && (
@@ -198,7 +198,7 @@ const InflationLineChart: React.FC<InflationLineChartProps> = ({ data }) => {
         <div
           className={`${getBackgroundColor(
             selectedPeriod.incrementoPorcentual
-          )} rounded-lg p-4 border`}
+          )} rounded-lg p-4 border absolute top-0 left-0 w-full z-10`}
         >
           <div className="flex justify-between items-start mb-3">
             <div>
@@ -208,6 +208,19 @@ const InflationLineChart: React.FC<InflationLineChartProps> = ({ data }) => {
               <p className="text-sm text-gray-600">
                 {getInflationLevel(selectedPeriod.incrementoPorcentual)}
               </p>
+              {/* Advertencia si el total bajó pero alguna categoría principal subió */}
+              {selectedPeriod.incrementoPorcentual < 0 &&
+                selectedPeriod.categoriasMasAfectadas.some(
+                  (cat) =>
+                    ["alquiler", "expensas"].some((key) =>
+                      cat.categoria.toLowerCase().includes(key)
+                    ) && cat.incrementoPorcentual > 0
+                ) && (
+                  <p className="text-xs text-orange-600 mt-2 font-semibold">
+                    ⚠️ Aunque el total bajó, alguna categoría principal aumentó.
+                    Revisa los detalles.
+                  </p>
+                )}
             </div>
             <button
               onClick={() => setSelectedPeriod(null)}
@@ -276,25 +289,4 @@ const InflationLineChart: React.FC<InflationLineChartProps> = ({ data }) => {
           <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
           <span>Reducción</span>
         </div>
-        <div className="flex items-center space-x-1">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span>0-3% Baja</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-          <span>3-8% Moderada</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-          <span>8-15% Alta</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-          <span>+15% Muy alta</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default InflationLineChart;
+        <div className="flex items-cen

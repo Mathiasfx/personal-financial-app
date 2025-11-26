@@ -558,27 +558,27 @@ export default function GastosFijosPage() {
                 nombreGasto.toLowerCase().includes(busqueda.toLowerCase())
               )
               .sort(([_, gastoA], [__, gastoB]) => {
+                // Si uno está pagado y el otro no, el pagado va primero
+                if (gastoA.pagado && !gastoB.pagado) return -1;
+                if (!gastoA.pagado && gastoB.pagado) return 1;
+
+                // Si ambos están pagados, mantener el orden original
+                if (gastoA.pagado && gastoB.pagado) return 0;
+
+                // Solo ordenar por fecha si ambos están sin pagar
                 const fechaA = gastoA.fechaVencimiento
                   ? gastoA.fechaVencimiento instanceof Date
                     ? gastoA.fechaVencimiento
                     : (gastoA.fechaVencimiento as Timestamp).toDate()
-                  : null;
+                  : new Date(0); // Fecha muy antigua si no hay fecha
 
                 const fechaB = gastoB.fechaVencimiento
                   ? gastoB.fechaVencimiento instanceof Date
                     ? gastoB.fechaVencimiento
                     : (gastoB.fechaVencimiento as Timestamp).toDate()
-                  : null;
+                  : new Date(0);
 
-                if (fechaA && fechaB) {
-                  return fechaA.getTime() - fechaB.getTime();
-                } else if (fechaA && !fechaB) {
-                  return -1;
-                } else if (!fechaA && fechaB) {
-                  return 1;
-                } else {
-                  return 0;
-                }
+                return fechaA.getTime() - fechaB.getTime();
               })
               .map(([nombre, gasto]) => (
                 <div

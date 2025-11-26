@@ -232,18 +232,13 @@ export default function EstadisticasPage() {
 
             {/* Métricas clave - Ancho completo */}
             <div
-              className="bg-white shadow-md rounded-xl p-6 mt-6 animate-fadeIn"
+              className="bg-white shadow-md rounded-xl p-6 mt-6 animate-fadeIn w-full"
               style={{ animationDelay: "1s" }}
             >
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="mr-2">📊</span>
                 Métricas Clave
               </h2>
+              {/* Las cards ocupan el 100% del ancho, sin columnas */}
               <KeyMetrics data={filteredData} />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+      
